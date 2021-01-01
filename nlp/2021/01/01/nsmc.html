@@ -619,7 +619,7 @@ window.onload = wrap_img;
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>약 20만개의 리뷰가 350만개의 많은 형태소로 분석되었으니, 각 리뷰는 의미를 최소 단위인 형태소 18개로 변형되었다. 리뷰 길이의 중앙값은 27이었으므로 상당한 형태소는 길이 1 또는 2인 것을 알 수 있다. 형태소에 대하여 더 분석해 보자.</p>
+<p>약 20만개의 리뷰가 350만개의 형태소로 분석되었다. 각 리뷰는 평균적으로 형태소를 18개로 구성된다. 리뷰 길이의 중앙값은 27이었으므로 상당 수의 형태소는 길이 1 또는 2인 것을 알 수 있다. 형태소에 대하여 더 분석해 보자.</p>
 
 </div>
 </div>
@@ -1235,7 +1235,7 @@ Name: morpheme, dtype: int64</pre>
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>리뷰의 형태소 분포는 위와 같다. 리뷰의 길이는 가변적이므로 동일한 길이의 입력으로 변환하겠다. 길이 40 이상은 절단하고 부족한 리뷰에 대해서는 패팅을 추가하겠다. 이를 위해서 keras의 pad_sequence 함수를 이용할 것이다.</p>
+<p>리뷰의 형태소 분포는 위와 같다. 리뷰의 길이는 가변적이므로 동일한 길이의 입력으로 변환하겠다. 길이 40 이상은 절단하고 부족한 리뷰에 대해서는 패팅을 추가한다. 이를 위해서 keras의 pad_sequence 함수를 이용할 것이다.</p>
 
 </div>
 </div>
@@ -1561,7 +1561,7 @@ Epoch 5/10
 <h1 id="모델-2:-합성곱-신경망">
 <a class="anchor" href="#%EB%AA%A8%EB%8D%B8-2:-%ED%95%A9%EC%84%B1%EA%B3%B1-%EC%8B%A0%EA%B2%BD%EB%A7%9D" aria-hidden="true"><span class="octicon octicon-link"></span></a>모델 2: 합성곱 신경망<a class="anchor-link" href="#%EB%AA%A8%EB%8D%B8-2:-%ED%95%A9%EC%84%B1%EA%B3%B1-%EC%8B%A0%EA%B2%BD%EB%A7%9D"> </a>
 </h1>
-<p>전창욱 등의 자연어 처리[2]에서 모델을 가져왔다. 다만 maxlen이나 max_words는 다르게 설정하였다.</p>
+<p>전창욱 등의 자연어 처리[1]에서 모델을 가져왔다. 다만 maxlen이나 max_words는 다르게 설정하였다.</p>
 
 </div>
 </div>
@@ -1793,8 +1793,8 @@ Epoch 5/10
 </h2>
 <ul>
 <li>한국어에 대한 형태소 분석, 토큰화, 이진 분류 모델을 구성</li>
-<li>이를 이용하여 네이버 영화 리뷰에 대한 감성 분류 문제에 접근</li>
-<li>khaiii 형태소 분석기로도 어느 정도의 성과를 얻을 수 있다는 점도 확인</li>
+<li>이를 이용하여 네이버 영화 리뷰에 대한 감성 분류</li>
+<li>khaiii 형태소 분석기로도 어느 정도의 성과를 얻음</li>
 </ul>
 
 </div>
