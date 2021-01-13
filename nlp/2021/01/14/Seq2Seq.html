@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Seq2Seq 기계 번역 | fastpages</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Seq2Seq 기계 번역" />
+<meta name="author" content="단호진" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Dive into deep learning의 Seq2Seq 학습 내용을 재구현해 보았다." />
+<meta property="og:description" content="Dive into deep learning의 Seq2Seq 학습 내용을 재구현해 보았다." />
+<link rel="canonical" href="https://danhojin.github.io/jupyter-blog/nlp/2021/01/14/Seq2Seq.html" />
+<meta property="og:url" content="https://danhojin.github.io/jupyter-blog/nlp/2021/01/14/Seq2Seq.html" />
+<meta property="og:site_name" content="fastpages" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-01-14T00:00:00-06:00" />
+<script type="application/ld+json">
+{"description":"Dive into deep learning의 Seq2Seq 학습 내용을 재구현해 보았다.","url":"https://danhojin.github.io/jupyter-blog/nlp/2021/01/14/Seq2Seq.html","@type":"BlogPosting","headline":"Seq2Seq 기계 번역","dateModified":"2021-01-14T00:00:00-06:00","datePublished":"2021-01-14T00:00:00-06:00","author":{"@type":"Person","name":"단호진"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://danhojin.github.io/jupyter-blog/nlp/2021/01/14/Seq2Seq.html"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/jupyter-blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://danhojin.github.io/jupyter-blog/feed.xml" title="fastpages" /><link rel="shortcut icon" type="image/x-icon" href="/jupyter-blog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/jupyter-blog/">fastpages</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/jupyter-blog/about/">About Me</a><a class="page-link" href="/jupyter-blog/search/">Search</a><a class="page-link" href="/jupyter-blog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Seq2Seq 기계 번역</h1><p class="page-description">Dive into deep learning의 Seq2Seq 학습 내용을 재구현해 보았다.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-01-14T00:00:00-06:00" itemprop="datePublished">
+        Jan 14, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">단호진</span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/jupyter-blog/categories/#nlp">nlp</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          <div class="px-2">
+
+    <a href="https://github.com/danhojin/jupyter-blog/tree/master/_notebooks/2021-01-14-Seq2Seq.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/jupyter-blog/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/danhojin/jupyter-blog/master?filepath=_notebooks%2F2021-01-14-Seq2Seq.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyter-blog/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/danhojin/jupyter-blog/blob/master/_notebooks/2021-01-14-Seq2Seq.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyter-blog/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Data">Data </a></li>
+<li class="toc-entry toc-h2"><a href="#Seq2Seq-model">Seq2Seq model </a></li>
+<li class="toc-entry toc-h2"><a href="#Loss-function">Loss function </a></li>
+<li class="toc-entry toc-h2"><a href="#Prediction">Prediction </a></li>
+<li class="toc-entry toc-h2"><a href="#Evaluation">Evaluation </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-01-14-Seq2Seq.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>이 포스트에는 <a href="https://d2l.ai/chapter_recurrent-modern/seq2seq.html">Dive into Deep Learning 9장의 Seq2Seq</a> 코드를 재구현하였다. Seq2Seq 학습의 배경이나 자세한 내용은 d2l 누리집에 들어있으나, 직접 작성해보고 나서야 코드의 자세한 부분을 이해할 수 있었다.</p>
+<p>Seq2Seq 학습을 통하여 해결하고자 하는 문제는 Fig. 9.7.1에 나타나 있다. 영어 문장에서 출발하여 불어로 도착하는 번역을 하고자 한다. 이 문제를 풀기 위하여 생성 모델이 가능한 오토인코더 구조로 Seq2Seq 모델을 개발하였다. 도착어 입장에서 입력과 출력은 같으며 bos(begin of sentence), eos(end of sentence) 토큰 차이만 있다.</p>
+<p><img src="https://d2l.ai/_images/seq2seq.svg" alt="Fig. 9.7.1 Sequence to sequence learning with an RNN encoder and an RNN decoder.">
+<strong>Fig. 9.7.1 Sequence to sequence learning with an RNN encoder and an RNN decoder.</strong></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">d2l</span> <span class="kn">import</span> <span class="n">torch</span> <span class="k">as</span> <span class="n">d2l</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data">
+<a class="anchor" href="#Data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data<a class="anchor-link" href="#Data"> </a>
+</h2>
+<p>출발과 도착어의 문장은 184, 201개의 어휘로 구성되는 작은 데이터셋이다. 문장 시작 bos, 문장 끝 eos, 채움 pad, 모름 unk 등의 특별한 의미를 갖는 단어/토큰도 이용한다. 출발·도착 문장은 뜻은 대응되나 길이가 다를 수 있고, eos 이후 seq_len를 보장하기 위하여 pad가 삽입되어 있다. valid_len에 유효 토큰의 수가 들어있다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">10</span>
+
+<span class="n">train_iter</span><span class="p">,</span> <span class="n">src_vocab</span><span class="p">,</span> <span class="n">dst_vocab</span> <span class="o">=</span> <span class="n">d2l</span><span class="o">.</span><span class="n">load_data_nmt</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span>
+
+<span class="nb">len</span><span class="p">(</span><span class="n">src_vocab</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dst_vocab</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(184, 201)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="s1">'|'</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">src_vocab</span><span class="o">.</span><span class="n">idx_to_token</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>"&lt;unk&gt;|&lt;pad&gt;|&lt;bos&gt;|&lt;eos&gt;|.|!|i|i'm|it|go"</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">train_iter</span><span class="p">:</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">x_valid_len</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">y_valid_len</span> <span class="o">=</span> <span class="n">batch</span>
+    <span class="k">break</span>
+    
+<span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">x_valid_len</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">y_valid_len</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(torch.Size([64, 10]),
+ torch.Size([64]),
+ torch.Size([64, 10]),
+ torch.Size([64]))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'number of valid tokens: </span><span class="si">{</span><span class="n">x_valid_len</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">src_vocab</span><span class="o">.</span><span class="n">idx_to_token</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>number of valid tokens: 4
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>"i'm hit ! &lt;eos&gt; &lt;pad&gt; &lt;pad&gt; &lt;pad&gt; &lt;pad&gt; &lt;pad&gt; &lt;pad&gt;"</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'number of valid tokens: </span><span class="si">{</span><span class="n">x_valid_len</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">dst_vocab</span><span class="o">.</span><span class="n">idx_to_token</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>number of valid tokens: 4
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>'je suis &lt;unk&gt; ! &lt;eos&gt; &lt;pad&gt; &lt;pad&gt; &lt;pad&gt; &lt;pad&gt; &lt;pad&gt;'</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Seq2Seq-model">
+<a class="anchor" href="#Seq2Seq-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Seq2Seq model<a class="anchor-link" href="#Seq2Seq-model"> </a>
+</h2>
+<p>모델의 구조 특징은 다음과 같다.</p>
+<ul>
+<li>오토인코더를 생성 모델로 사용하기 위하여 부호기 Encoder와 복호기 Decoder의 RNN 은닉 스테이트를 공유</li>
+<li>은닉 스테이트의 마지막 층은 context로 칭하여 입력에 주입</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Seq2SeqEnc</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">src_vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rnn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GRU</span><span class="p">(</span><span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rnn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">state</span>
+    
+    
+<span class="k">class</span> <span class="nc">Seq2SeqDec</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dst_vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">dst_vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rnn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GRU</span><span class="p">(</span><span class="n">embed_dim</span> <span class="o">+</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">dst_vocab_size</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch x hidden -&gt; seq x batch x hidden</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rnn</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">y</span><span class="p">,</span> <span class="n">context</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># out.shape batch x seq x dst vocab</span>
+        <span class="c1"># state.shape layers x batch x hidden</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">state</span>
+    
+
+<span class="k">class</span> <span class="nc">Seq2SeqEncDec</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_vocab_size</span><span class="p">,</span> <span class="n">dst_vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enc</span> <span class="o">=</span> <span class="n">Seq2SeqEnc</span><span class="p">(</span><span class="n">src_vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dec</span> <span class="o">=</span> <span class="n">Seq2SeqDec</span><span class="p">(</span><span class="n">dst_vocab_size</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enc</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dec</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">state</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Loss-function">
+<a class="anchor" href="#Loss-function" aria-hidden="true"><span class="octicon octicon-link"></span></a>Loss function<a class="anchor-link" href="#Loss-function"> </a>
+</h2>
+<ul>
+<li>도착어의 입력 문장 머리에 bos를 삽입</li>
+<li>문장마다 의미 있는 토큰 수가 다르므로 마스크 트릭을 사용</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">0.1</span>
+<span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">10</span>
+<span class="n">lr</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">device</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">'cpu'</span><span class="p">)</span>  <span class="c1"># d2l.try_gpu()</span>
+
+<span class="n">train_iter</span><span class="p">,</span> <span class="n">src_vocab</span><span class="p">,</span> <span class="n">dst_vocab</span> <span class="o">=</span> <span class="n">d2l</span><span class="o">.</span><span class="n">load_data_nmt</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span>
+
+<span class="n">mod_1</span> <span class="o">=</span> <span class="n">Seq2SeqEncDec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src_vocab</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dst_vocab</span><span class="p">),</span> <span class="n">embed_dim</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">dropout</span><span class="p">)</span>
+<span class="n">mod_1</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">mod_1</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+
+<span class="n">animator</span> <span class="o">=</span> <span class="n">d2l</span><span class="o">.</span><span class="n">Animator</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">'epoch'</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">'loss'</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">epochs</span><span class="p">],</span> <span class="n">yscale</span><span class="o">=</span><span class="s1">'log'</span><span class="p">)</span>
+
+<span class="n">mod_1</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">losses</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">train_iter</span><span class="p">:</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">X_valid_len</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Y_valid_len</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]</span>
+        <span class="n">bos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">dst_vocab</span><span class="p">[</span><span class="s1">'&lt;bos&gt;'</span><span class="p">]]</span> <span class="o">*</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">Y_in</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">bos</span><span class="p">,</span> <span class="n">Y</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Y_hat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mod_1</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y_in</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">seq_len</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">Y_valid_len</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Y_hat</span> <span class="o">=</span> <span class="n">Y_hat</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dst_vocab</span><span class="p">)))</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">loss</span><span class="p">(</span><span class="n">Y_hat</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">l</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">losses</span> <span class="o">+=</span> <span class="n">l</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">animator</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="p">[</span><span class="n">losses</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_svg output_subarea ">
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+&lt;!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"&gt;
+<!-- Created with matplotlib (https://matplotlib.org/) -->
+<svg height="180.65625pt" version="1.1" viewbox="0 0 257.521875 180.65625" width="257.521875pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <work>
+    <type rdf:resource="http://purl.org/dc/dcmitype/StillImage"></type>
+    <date>2021-01-14T06:38:07.496789</date>
+    <format>image/svg+xml</format>
+    <creator>
+     <agent>
+      <title>Matplotlib v3.3.3, https://matplotlib.org/</title>
+     </agent>
+    </creator>
+   </work>
+  </rdf>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linecap:butt;stroke-linejoin:round;}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 180.65625 
+L 257.521875 180.65625 
+L 257.521875 0 
+L 0 0 
+z
+" style="fill:none;"></path>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 45.478125 143.1 
+L 240.778125 143.1 
+L 240.778125 7.2 
+L 45.478125 7.2 
+z
+" style="fill:#ffffff;"></path>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <path clip-path="url(#pe082702315)" d="M 45.478125 143.1 
+L 45.478125 7.2 
+" style="fill:none;stroke:#b0b0b0;stroke-linecap:square;stroke-width:0.8;"></path>
+     </g>
+     <g id="line2d_2">
+      <defs>
+       <path d="M 0 0 
+L 0 3.5 
+" id="m4ef3653a1f" style="stroke:#000000;stroke-width:0.8;"></path>
+      </defs>
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="45.478125" xlink:href="#m4ef3653a1f" y="143.1"></use>
+      </g>
+     </g>
+     <g id="text_1">
+      <!-- 0 -->
+      <g transform="translate(42.296875 157.698438)scale(0.1 -0.1)">
+       <defs>
+        <path d="M 31.78125 66.40625 
+Q 24.171875 66.40625 20.328125 58.90625 
+Q 16.5 51.421875 16.5 36.375 
+Q 16.5 21.390625 20.328125 13.890625 
+Q 24.171875 6.390625 31.78125 6.390625 
+Q 39.453125 6.390625 43.28125 13.890625 
+Q 47.125 21.390625 47.125 36.375 
+Q 47.125 51.421875 43.28125 58.90625 
+Q 39.453125 66.40625 31.78125 66.40625 
+z
+M 31.78125 74.21875 
+Q 44.046875 74.21875 50.515625 64.515625 
+Q 56.984375 54.828125 56.984375 36.375 
+Q 56.984375 17.96875 50.515625 8.265625 
+Q 44.046875 -1.421875 31.78125 -1.421875 
+Q 19.53125 -1.421875 13.0625 8.265625 
+Q 6.59375 17.96875 6.59375 36.375 
+Q 6.59375 54.828125 13.0625 64.515625 
+Q 19.53125 74.21875 31.78125 74.21875 
+z
+" id="DejaVuSans-48"></path>
+       </defs>
+       <use xlink:href="#DejaVuSans-48"></use>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_3">
+      <path clip-path="url(#pe082702315)" d="M 94.303125 143.1 
+L 94.303125 7.2 
+" style="fill:none;stroke:#b0b0b0;stroke-linecap:square;stroke-width:0.8;"></path>
+     </g>
+     <g id="line2d_4">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="94.303125" xlink:href="#m4ef3653a1f" y="143.1"></use>
+      </g>
+     </g>
+     <g id="text_2">
+      <!-- 100 -->
+      <g transform="translate(84.759375 157.698438)scale(0.1 -0.1)">
+       <defs>
+        <path d="M 12.40625 8.296875 
+L 28.515625 8.296875 
+L 28.515625 63.921875 
+L 10.984375 60.40625 
+L 10.984375 69.390625 
+L 28.421875 72.90625 
+L 38.28125 72.90625 
+L 38.28125 8.296875 
+L 54.390625 8.296875 
+L 54.390625 0 
+L 12.40625 0 
+z
+" id="DejaVuSans-49"></path>
+       </defs>
+       <use xlink:href="#DejaVuSans-49"></use>
+       <use x="63.623047" xlink:href="#DejaVuSans-48"></use>
+       <use x="127.246094" xlink:href="#DejaVuSans-48"></use>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_5">
+      <path clip-path="url(#pe082702315)" d="M 143.128125 143.1 
+L 143.128125 7.2 
+" style="fill:none;stroke:#b0b0b0;stroke-linecap:square;stroke-width:0.8;"></path>
+     </g>
+     <g id="line2d_6">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="143.128125" xlink:href="#m4ef3653a1f" y="143.1"></use>
+      </g>
+     </g>
+     <g id="text_3">
+      <!-- 200 -->
+      <g transform="translate(133.584375 157.698438)scale(0.1 -0.1)">
+       <defs>
+        <path d="M 19.1875 8.296875 
+L 53.609375 8.296875 
+L 53.609375 0 
+L 7.328125 0 
+L 7.328125 8.296875 
+Q 12.9375 14.109375 22.625 23.890625 
+Q 32.328125 33.6875 34.8125 36.53125 
+Q 39.546875 41.84375 41.421875 45.53125 
+Q 43.3125 49.21875 43.3125 52.78125 
+Q 43.3125 58.59375 39.234375 62.25 
+Q 35.15625 65.921875 28.609375 65.921875 
+Q 23.96875 65.921875 18.8125 64.3125 
+Q 13.671875 62.703125 7.8125 59.421875 
+L 7.8125 69.390625 
+Q 13.765625 71.78125 18.9375 73 
+Q 24.125 74.21875 28.421875 74.21875 
+Q 39.75 74.21875 46.484375 68.546875 
+Q 53.21875 62.890625 53.21875 53.421875 
+Q 53.21875 48.921875 51.53125 44.890625 
+Q 49.859375 40.875 45.40625 35.40625 
+Q 44.1875 33.984375 37.640625 27.21875 
+Q 31.109375 20.453125 19.1875 8.296875 
+z
+" id="DejaVuSans-50"></path>
+       </defs>
+       <use xlink:href="#DejaVuSans-50"></use>
+       <use x="63.623047" xlink:href="#DejaVuSans-48"></use>
+       <use x="127.246094" xlink:href="#DejaVuSans-48"></use>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_7">
+      <path clip-path="url(#pe082702315)" d="M 191.953125 143.1 
+L 191.953125 7.2 
+" style="fill:none;stroke:#b0b0b0;stroke-linecap:square;stroke-width:0.8;"></path>
+     </g>
+     <g id="line2d_8">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="191.953125" xlink:href="#m4ef3653a1f" y="143.1"></use>
+      </g>
+     </g>
+     <g id="text_4">
+      <!-- 300 -->
+      <g transform="translate(182.409375 157.698438)scale(0.1 -0.1)">
+       <defs>
+        <path d="M 40.578125 39.3125 
+Q 47.65625 37.796875 51.625 33 
+Q 55.609375 28.21875 55.609375 21.1875 
+Q 55.609375 10.40625 48.1875 4.484375 
+Q 40.765625 -1.421875 27.09375 -1.421875 
+Q 22.515625 -1.421875 17.65625 -0.515625 
+Q 12.796875 0.390625 7.625 2.203125 
+L 7.625 11.71875 
+Q 11.71875 9.328125 16.59375 8.109375 
+Q 21.484375 6.890625 26.8125 6.890625 
+Q 36.078125 6.890625 40.9375 10.546875 
+Q 45.796875 14.203125 45.796875 21.1875 
+Q 45.796875 27.640625 41.28125 31.265625 
+Q 36.765625 34.90625 28.71875 34.90625 
+L 20.21875 34.90625 
+L 20.21875 43.015625 
+L 29.109375 43.015625 
+Q 36.375 43.015625 40.234375 45.921875 
+Q 44.09375 48.828125 44.09375 54.296875 
+Q 44.09375 59.90625 40.109375 62.90625 
+Q 36.140625 65.921875 28.71875 65.921875 
+Q 24.65625 65.921875 20.015625 65.03125 
+Q 15.375 64.15625 9.8125 62.3125 
+L 9.8125 71.09375 
+Q 15.4375 72.65625 20.34375 73.4375 
+Q 25.25 74.21875 29.59375 74.21875 
+Q 40.828125 74.21875 47.359375 69.109375 
+Q 53.90625 64.015625 53.90625 55.328125 
+Q 53.90625 49.265625 50.4375 45.09375 
+Q 46.96875 40.921875 40.578125 39.3125 
+z
+" id="DejaVuSans-51"></path>
+       </defs>
+       <use xlink:href="#DejaVuSans-51"></use>
+       <use x="63.623047" xlink:href="#DejaVuSans-48"></use>
+       <use x="127.246094" xlink:href="#DejaVuSans-48"></use>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_9">
+      <path clip-path="url(#pe082702315)" d="M 240.778125 143.1 
+L 240.778125 7.2 
+" style="fill:none;stroke:#b0b0b0;stroke-linecap:square;stroke-width:0.8;"></path>
+     </g>
+     <g id="line2d_10">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="240.778125" xlink:href="#m4ef3653a1f" y="143.1"></use>
+      </g>
+     </g>
+     <g id="text_5">
+      <!-- 400 -->
+      <g transform="translate(231.234375 157.698438)scale(0.1 -0.1)">
+       <defs>
+        <path d="M 37.796875 64.3125 
+L 12.890625 25.390625 
+L 37.796875 25.390625 
+z
+M 35.203125 72.90625 
+L 47.609375 72.90625 
+L 47.609375 25.390625 
+L 58.015625 25.390625 
+L 58.015625 17.1875 
+L 47.609375 17.1875 
+L 47.609375 0 
+L 37.796875 0 
+L 37.796875 17.1875 
+L 4.890625 17.1875 
+L 4.890625 26.703125 
+z
+" id="DejaVuSans-52"></path>
+       </defs>
+       <use xlink:href="#DejaVuSans-52"></use>
+       <use x="63.623047" xlink:href="#DejaVuSans-48"></use>
+       <use x="127.246094" xlink:href="#DejaVuSans-48"></use>
+      </g>
+     </g>
+    </g>
+    <g id="text_6">
+     <!-- epoch -->
+     <g transform="translate(127.9 171.376563)scale(0.1 -0.1)">
+      <defs>
+       <path d="M 56.203125 29.59375 
+L 56.203125 25.203125 
+L 14.890625 25.203125 
+Q 15.484375 15.921875 20.484375 11.0625 
+Q 25.484375 6.203125 34.421875 6.203125 
+Q 39.59375 6.203125 44.453125 7.46875 
+Q 49.3125 8.734375 54.109375 11.28125 
+L 54.109375 2.78125 
+Q 49.265625 0.734375 44.1875 -0.34375 
+Q 39.109375 -1.421875 33.890625 -1.421875 
+Q 20.796875 -1.421875 13.15625 6.1875 
+Q 5.515625 13.8125 5.515625 26.8125 
+Q 5.515625 40.234375 12.765625 48.109375 
+Q 20.015625 56 32.328125 56 
+Q 43.359375 56 49.78125 48.890625 
+Q 56.203125 41.796875 56.203125 29.59375 
+z
+M 47.21875 32.234375 
+Q 47.125 39.59375 43.09375 43.984375 
+Q 39.0625 48.390625 32.421875 48.390625 
+Q 24.90625 48.390625 20.390625 44.140625 
+Q 15.875 39.890625 15.1875 32.171875 
+z
+" id="DejaVuSans-101"></path>
+       <path d="M 18.109375 8.203125 
+L 18.109375 -20.796875 
+L 9.078125 -20.796875 
+L 9.078125 54.6875 
+L 18.109375 54.6875 
+L 18.109375 46.390625 
+Q 20.953125 51.265625 25.265625 53.625 
+Q 29.59375 56 35.59375 56 
+Q 45.5625 56 51.78125 48.09375 
+Q 58.015625 40.1875 58.015625 27.296875 
+Q 58.015625 14.40625 51.78125 6.484375 
+Q 45.5625 -1.421875 35.59375 -1.421875 
+Q 29.59375 -1.421875 25.265625 0.953125 
+Q 20.953125 3.328125 18.109375 8.203125 
+z
+M 48.6875 27.296875 
+Q 48.6875 37.203125 44.609375 42.84375 
+Q 40.53125 48.484375 33.40625 48.484375 
+Q 26.265625 48.484375 22.1875 42.84375 
+Q 18.109375 37.203125 18.109375 27.296875 
+Q 18.109375 17.390625 22.1875 11.75 
+Q 26.265625 6.109375 33.40625 6.109375 
+Q 40.53125 6.109375 44.609375 11.75 
+Q 48.6875 17.390625 48.6875 27.296875 
+z
+" id="DejaVuSans-112"></path>
+       <path d="M 30.609375 48.390625 
+Q 23.390625 48.390625 19.1875 42.75 
+Q 14.984375 37.109375 14.984375 27.296875 
+Q 14.984375 17.484375 19.15625 11.84375 
+Q 23.34375 6.203125 30.609375 6.203125 
+Q 37.796875 6.203125 41.984375 11.859375 
+Q 46.1875 17.53125 46.1875 27.296875 
+Q 46.1875 37.015625 41.984375 42.703125 
+Q 37.796875 48.390625 30.609375 48.390625 
+z
+M 30.609375 56 
+Q 42.328125 56 49.015625 48.375 
+Q 55.71875 40.765625 55.71875 27.296875 
+Q 55.71875 13.875 49.015625 6.21875 
+Q 42.328125 -1.421875 30.609375 -1.421875 
+Q 18.84375 -1.421875 12.171875 6.21875 
+Q 5.515625 13.875 5.515625 27.296875 
+Q 5.515625 40.765625 12.171875 48.375 
+Q 18.84375 56 30.609375 56 
+z
+" id="DejaVuSans-111"></path>
+       <path d="M 48.78125 52.59375 
+L 48.78125 44.1875 
+Q 44.96875 46.296875 41.140625 47.34375 
+Q 37.3125 48.390625 33.40625 48.390625 
+Q 24.65625 48.390625 19.8125 42.84375 
+Q 14.984375 37.3125 14.984375 27.296875 
+Q 14.984375 17.28125 19.8125 11.734375 
+Q 24.65625 6.203125 33.40625 6.203125 
+Q 37.3125 6.203125 41.140625 7.25 
+Q 44.96875 8.296875 48.78125 10.40625 
+L 48.78125 2.09375 
+Q 45.015625 0.34375 40.984375 -0.53125 
+Q 36.96875 -1.421875 32.421875 -1.421875 
+Q 20.0625 -1.421875 12.78125 6.34375 
+Q 5.515625 14.109375 5.515625 27.296875 
+Q 5.515625 40.671875 12.859375 48.328125 
+Q 20.21875 56 33.015625 56 
+Q 37.15625 56 41.109375 55.140625 
+Q 45.0625 54.296875 48.78125 52.59375 
+z
+" id="DejaVuSans-99"></path>
+       <path d="M 54.890625 33.015625 
+L 54.890625 0 
+L 45.90625 0 
+L 45.90625 32.71875 
+Q 45.90625 40.484375 42.875 44.328125 
+Q 39.84375 48.1875 33.796875 48.1875 
+Q 26.515625 48.1875 22.3125 43.546875 
+Q 18.109375 38.921875 18.109375 30.90625 
+L 18.109375 0 
+L 9.078125 0 
+L 9.078125 75.984375 
+L 18.109375 75.984375 
+L 18.109375 46.1875 
+Q 21.34375 51.125 25.703125 53.5625 
+Q 30.078125 56 35.796875 56 
+Q 45.21875 56 50.046875 50.171875 
+Q 54.890625 44.34375 54.890625 33.015625 
+z
+" id="DejaVuSans-104"></path>
+      </defs>
+      <use xlink:href="#DejaVuSans-101"></use>
+      <use x="61.523438" xlink:href="#DejaVuSans-112"></use>
+      <use x="125" xlink:href="#DejaVuSans-111"></use>
+      <use x="186.181641" xlink:href="#DejaVuSans-99"></use>
+      <use x="241.162109" xlink:href="#DejaVuSans-104"></use>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_11">
+      <path clip-path="url(#pe082702315)" d="M 45.478125 141.025758 
+L 240.778125 141.025758 
+" style="fill:none;stroke:#b0b0b0;stroke-linecap:square;stroke-width:0.8;"></path>
+     </g>
+     <g id="line2d_12">
+      <defs>
+       <path d="M 0 0 
+L -3.5 0 
+" id="mde57286db4" style="stroke:#000000;stroke-width:0.8;"></path>
+      </defs>
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="45.478125" xlink:href="#mde57286db4" y="141.025758"></use>
+      </g>
+     </g>
+     <g id="text_7">
+      <!-- $\mathdefault{10^{0}}$ -->
+      <g transform="translate(20.878125 144.824977)scale(0.1 -0.1)">
+       <use transform="translate(0 0.765625)" xlink:href="#DejaVuSans-49"></use>
+       <use transform="translate(63.623047 0.765625)" xlink:href="#DejaVuSans-48"></use>
+       <use transform="translate(128.203125 39.046875)scale(0.7)" xlink:href="#DejaVuSans-48"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_13">
+      <path clip-path="url(#pe082702315)" d="M 45.478125 47.816132 
+L 240.778125 47.816132 
+" style="fill:none;stroke:#b0b0b0;stroke-linecap:square;stroke-width:0.8;"></path>
+     </g>
+     <g id="line2d_14">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="45.478125" xlink:href="#mde57286db4" y="47.816132"></use>
+      </g>
+     </g>
+     <g id="text_8">
+      <!-- $\mathdefault{10^{1}}$ -->
+      <g transform="translate(20.878125 51.61535)scale(0.1 -0.1)">
+       <use transform="translate(0 0.684375)" xlink:href="#DejaVuSans-49"></use>
+       <use transform="translate(63.623047 0.684375)" xlink:href="#DejaVuSans-48"></use>
+       <use transform="translate(128.203125 38.965625)scale(0.7)" xlink:href="#DejaVuSans-49"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_15">
+      <defs>
+       <path d="M 0 0 
+L -2 0 
+" id="m9df44f9f8e" style="stroke:#000000;stroke-width:0.6;"></path>
+      </defs>
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="112.966865"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_16">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="96.553464"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_17">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="84.907971"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_6">
+     <g id="line2d_18">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="75.875025"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_7">
+     <g id="line2d_19">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="68.494571"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_8">
+     <g id="line2d_20">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="62.254485"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_9">
+     <g id="line2d_21">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="56.849078"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_10">
+     <g id="line2d_22">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="52.08117"></use>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_11">
+     <g id="line2d_23">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.6;" x="45.478125" xlink:href="#m9df44f9f8e" y="19.757238"></use>
+      </g>
+     </g>
+    </g>
+    <g id="text_9">
+     <!-- loss -->
+     <g transform="translate(14.798437 84.807812)rotate(-90)scale(0.1 -0.1)">
+      <defs>
+       <path d="M 9.421875 75.984375 
+L 18.40625 75.984375 
+L 18.40625 0 
+L 9.421875 0 
+z
+" id="DejaVuSans-108"></path>
+       <path d="M 44.28125 53.078125 
+L 44.28125 44.578125 
+Q 40.484375 46.53125 36.375 47.5 
+Q 32.28125 48.484375 27.875 48.484375 
+Q 21.1875 48.484375 17.84375 46.4375 
+Q 14.5 44.390625 14.5 40.28125 
+Q 14.5 37.15625 16.890625 35.375 
+Q 19.28125 33.59375 26.515625 31.984375 
+L 29.59375 31.296875 
+Q 39.15625 29.25 43.1875 25.515625 
+Q 47.21875 21.78125 47.21875 15.09375 
+Q 47.21875 7.46875 41.1875 3.015625 
+Q 35.15625 -1.421875 24.609375 -1.421875 
+Q 20.21875 -1.421875 15.453125 -0.5625 
+Q 10.6875 0.296875 5.421875 2 
+L 5.421875 11.28125 
+Q 10.40625 8.6875 15.234375 7.390625 
+Q 20.0625 6.109375 24.8125 6.109375 
+Q 31.15625 6.109375 34.5625 8.28125 
+Q 37.984375 10.453125 37.984375 14.40625 
+Q 37.984375 18.0625 35.515625 20.015625 
+Q 33.0625 21.96875 24.703125 23.78125 
+L 21.578125 24.515625 
+Q 13.234375 26.265625 9.515625 29.90625 
+Q 5.8125 33.546875 5.8125 39.890625 
+Q 5.8125 47.609375 11.28125 51.796875 
+Q 16.75 56 26.8125 56 
+Q 31.78125 56 36.171875 55.265625 
+Q 40.578125 54.546875 44.28125 53.078125 
+z
+" id="DejaVuSans-115"></path>
+      </defs>
+      <use xlink:href="#DejaVuSans-108"></use>
+      <use x="27.783203" xlink:href="#DejaVuSans-111"></use>
+      <use x="88.964844" xlink:href="#DejaVuSans-115"></use>
+      <use x="141.064453" xlink:href="#DejaVuSans-115"></use>
+     </g>
+    </g>
+   </g>
+   <g id="line2d_24">
+    <path clip-path="url(#pe082702315)" d="M 45.966375 13.377273 
+L 46.454625 26.174458 
+L 46.942875 29.734886 
+L 47.431125 31.241508 
+L 47.919375 32.303869 
+L 48.407625 33.748094 
+L 49.872375 37.21043 
+L 50.848875 39.772649 
+L 51.337125 40.983423 
+L 51.825375 41.775233 
+L 52.313625 43.01781 
+L 52.801875 43.552975 
+L 53.290125 44.268157 
+L 54.266625 46.00173 
+L 55.243125 47.73182 
+L 56.707875 49.838235 
+L 58.660875 53.254667 
+L 59.149125 53.581968 
+L 59.637375 54.351016 
+L 60.125625 54.742494 
+L 61.102125 56.270334 
+L 61.590375 56.485193 
+L 64.031625 60.093285 
+L 64.519875 60.899913 
+L 65.008125 61.111756 
+L 65.496375 61.762803 
+L 65.984625 62.777322 
+L 66.472875 63.285436 
+L 67.449375 64.676813 
+L 67.937625 64.971409 
+L 68.914125 66.186721 
+L 69.890625 67.418218 
+L 70.378875 67.927182 
+L 70.867125 68.632378 
+L 71.355375 69.063344 
+L 71.843625 70.220883 
+L 72.331875 70.887599 
+L 72.820125 71.290912 
+L 73.308375 72.304567 
+L 74.284875 72.869321 
+L 74.773125 73.449577 
+L 75.261375 74.307009 
+L 75.749625 74.327599 
+L 76.726125 76.021099 
+L 77.214375 76.273262 
+L 77.702625 75.76908 
+L 78.190875 77.714013 
+L 78.679125 77.674122 
+L 79.167375 78.137691 
+L 79.655625 79.03672 
+L 80.143875 79.274214 
+L 80.632125 80.364514 
+L 81.120375 80.284396 
+L 81.608625 80.328344 
+L 82.096875 81.183468 
+L 82.585125 81.427996 
+L 83.073375 82.588627 
+L 83.561625 82.127669 
+L 84.049875 83.737114 
+L 84.538125 83.308581 
+L 85.026375 84.208712 
+L 85.514625 83.834012 
+L 86.002875 84.340441 
+L 86.491125 85.434994 
+L 86.979375 85.822433 
+L 87.467625 86.841062 
+L 87.955875 86.941656 
+L 88.444125 87.518809 
+L 89.420625 87.845989 
+L 89.908875 88.393573 
+L 90.397125 89.350235 
+L 90.885375 89.041444 
+L 91.373625 90.354757 
+L 91.861875 90.520469 
+L 92.350125 91.658611 
+L 92.838375 91.725095 
+L 93.326625 92.313761 
+L 93.814875 92.612893 
+L 94.303125 92.210956 
+L 94.791375 92.818927 
+L 95.279625 93.738085 
+L 95.767875 93.139563 
+L 96.256125 94.642334 
+L 96.744375 94.604942 
+L 97.232625 95.292298 
+L 97.720875 95.497288 
+L 98.209125 95.264858 
+L 98.697375 95.855807 
+L 99.185625 95.13321 
+L 99.673875 96.586107 
+L 100.162125 96.757712 
+L 100.650375 97.22667 
+L 101.138625 97.329307 
+L 101.626875 97.983846 
+L 102.115125 97.376226 
+L 102.603375 98.387744 
+L 103.091625 98.892355 
+L 103.579875 98.704581 
+L 104.068125 99.198319 
+L 104.556375 99.504765 
+L 105.044625 99.679352 
+L 105.532875 100.360733 
+L 106.021125 101.461719 
+L 106.509375 101.816145 
+L 106.997625 100.388411 
+L 107.485875 101.610032 
+L 107.974125 101.656578 
+L 108.462375 103.023647 
+L 108.950625 103.759778 
+L 109.438875 103.969212 
+L 109.927125 103.415271 
+L 110.415375 104.72593 
+L 110.903625 104.79715 
+L 111.391875 103.995754 
+L 111.880125 105.379822 
+L 112.368375 104.791192 
+L 113.344875 105.555372 
+L 113.833125 105.447943 
+L 114.809625 106.994636 
+L 115.297875 106.228588 
+L 115.786125 107.632699 
+L 116.274375 106.488285 
+L 116.762625 107.109493 
+L 117.250875 106.994289 
+L 117.739125 107.332781 
+L 118.227375 108.377884 
+L 118.715625 107.687835 
+L 119.692125 108.818469 
+L 120.180375 109.814498 
+L 120.668625 110.020827 
+L 121.156875 109.900826 
+L 122.133375 111.319018 
+L 122.621625 111.219937 
+L 123.109875 112.851769 
+L 123.598125 112.019847 
+L 124.086375 113.401497 
+L 124.574625 111.484849 
+L 125.551125 112.980063 
+L 126.039375 112.750966 
+L 126.527625 112.852113 
+L 127.015875 113.535574 
+L 127.992375 109.948393 
+L 128.480625 110.679639 
+L 128.968875 111.633353 
+L 129.457125 111.333489 
+L 130.433625 112.850142 
+L 130.921875 113.45877 
+L 131.410125 112.314297 
+L 131.898375 112.167182 
+L 132.386625 113.101513 
+L 132.874875 113.672229 
+L 133.363125 113.624849 
+L 133.851375 115.718039 
+L 134.339625 114.868094 
+L 134.827875 113.399601 
+L 135.316125 117.065835 
+L 135.804375 117.059278 
+L 136.292625 114.519745 
+L 136.780875 116.747322 
+L 137.269125 117.653664 
+L 137.757375 118.862419 
+L 138.245625 117.13609 
+L 138.733875 118.734662 
+L 139.222125 118.685156 
+L 139.710375 117.912716 
+L 140.198625 118.917539 
+L 140.686875 119.014317 
+L 141.175125 119.231599 
+L 141.663375 119.271584 
+L 142.151625 118.833415 
+L 142.639875 119.819267 
+L 143.128125 120.156986 
+L 143.616375 120.045755 
+L 144.104625 120.707335 
+L 144.592875 118.728275 
+L 145.081125 119.892927 
+L 145.569375 120.730204 
+L 146.057625 120.176559 
+L 146.545875 119.862073 
+L 147.034125 121.089036 
+L 147.522375 121.899926 
+L 148.010625 122.947148 
+L 148.498875 122.836079 
+L 148.987125 121.852463 
+L 149.475375 123.434672 
+L 149.963625 124.423647 
+L 150.451875 123.522819 
+L 150.940125 124.567722 
+L 151.428375 122.950092 
+L 151.916625 122.200637 
+L 152.404875 122.247879 
+L 152.893125 122.567269 
+L 153.869625 124.821237 
+L 154.357875 123.60975 
+L 155.334375 123.164601 
+L 155.822625 122.940891 
+L 156.310875 125.401002 
+L 156.799125 123.470638 
+L 157.287375 124.7087 
+L 157.775625 124.312327 
+L 158.263875 125.174242 
+L 158.752125 124.17484 
+L 159.240375 123.729683 
+L 160.216875 125.283502 
+L 160.705125 123.974337 
+L 161.193375 125.457179 
+L 161.681625 124.708783 
+L 162.169875 124.280458 
+L 163.146375 125.63112 
+L 163.634625 124.470639 
+L 164.122875 124.478978 
+L 164.611125 126.107187 
+L 165.099375 125.27416 
+L 165.587625 123.897958 
+L 166.075875 123.207883 
+L 166.564125 125.928106 
+L 167.052375 124.75853 
+L 167.540625 126.014807 
+L 168.028875 125.387576 
+L 168.517125 125.549929 
+L 169.005375 126.134367 
+L 169.493625 125.823212 
+L 169.981875 126.177039 
+L 170.470125 126.143197 
+L 170.958375 127.495655 
+L 171.446625 126.9696 
+L 171.934875 125.951877 
+L 172.423125 124.008561 
+L 172.911375 125.238366 
+L 173.399625 124.34144 
+L 173.887875 124.895588 
+L 174.376125 124.59364 
+L 174.864375 126.104011 
+L 175.352625 125.091571 
+L 175.840875 126.353544 
+L 176.329125 126.333073 
+L 176.817375 126.6743 
+L 177.305625 126.293255 
+L 177.793875 129.052401 
+L 178.282125 126.115141 
+L 178.770375 125.894198 
+L 179.258625 125.24228 
+L 179.746875 123.373654 
+L 180.235125 125.308914 
+L 180.723375 124.219908 
+L 181.211625 124.915594 
+L 182.188125 126.844715 
+L 182.676375 125.771259 
+L 183.164625 126.10467 
+L 183.652875 125.995007 
+L 184.141125 125.502151 
+L 184.629375 125.918584 
+L 185.117625 126.101886 
+L 185.605875 126.464399 
+L 186.094125 125.658838 
+L 186.582375 128.012398 
+L 187.070625 129.160899 
+L 187.558875 127.269359 
+L 188.047125 129.009531 
+L 188.535375 126.701631 
+L 189.023625 128.426655 
+L 189.511875 128.64668 
+L 190.000125 130.158591 
+L 190.488375 128.806749 
+L 190.976625 128.690656 
+L 191.464875 130.467891 
+L 192.441375 129.945998 
+L 192.929625 129.916389 
+L 193.417875 129.24654 
+L 193.906125 130.212136 
+L 194.394375 131.45998 
+L 194.882625 130.728514 
+L 195.370875 130.800687 
+L 195.859125 131.152592 
+L 196.347375 130.180634 
+L 196.835625 131.193254 
+L 197.323875 129.672608 
+L 197.812125 128.885037 
+L 198.300375 130.644191 
+L 198.788625 131.394882 
+L 199.276875 131.12912 
+L 199.765125 130.253206 
+L 200.253375 131.915774 
+L 200.741625 132.147176 
+L 201.229875 131.104739 
+L 202.206375 132.568719 
+L 202.694625 133.991633 
+L 203.671125 132.125981 
+L 204.159375 131.423332 
+L 204.647625 132.238932 
+L 205.135875 132.222861 
+L 205.624125 133.091491 
+L 206.112375 130.962009 
+L 206.600625 132.693545 
+L 207.088875 129.798573 
+L 207.577125 130.85829 
+L 208.065375 130.960819 
+L 208.553625 129.936539 
+L 209.041875 131.422877 
+L 209.530125 130.860397 
+L 210.018375 131.516725 
+L 210.994875 133.091944 
+L 211.483125 132.859412 
+L 211.971375 131.623511 
+L 212.459625 135.388582 
+L 212.947875 133.380273 
+L 213.436125 134.308874 
+L 213.924375 133.649366 
+L 214.412625 134.331395 
+L 214.900875 133.758201 
+L 215.389125 132.177367 
+L 215.877375 134.449725 
+L 216.365625 135.054123 
+L 216.853875 133.630204 
+L 217.342125 133.068268 
+L 217.830375 131.743511 
+L 218.318625 133.322896 
+L 218.806875 132.535251 
+L 219.295125 134.218032 
+L 219.783375 132.984946 
+L 220.271625 133.526315 
+L 220.759875 131.415836 
+L 221.248125 133.150069 
+L 222.224625 134.939446 
+L 222.712875 133.896169 
+L 223.201125 134.347015 
+L 223.689375 134.291668 
+L 224.177625 133.797012 
+L 224.665875 134.876509 
+L 225.154125 134.376382 
+L 225.642375 134.058827 
+L 226.130625 136.922727 
+L 226.618875 135.351282 
+L 227.107125 136.631147 
+L 227.595375 136.774837 
+L 228.571875 135.471331 
+L 229.060125 136.015344 
+L 229.548375 135.494336 
+L 230.036625 135.629622 
+L 230.524875 136.30509 
+L 231.013125 134.418705 
+L 231.501375 135.162752 
+L 231.989625 135.388366 
+L 232.477875 136.091114 
+L 232.966125 135.144875 
+L 233.454375 136.18784 
+L 233.942625 134.89177 
+L 234.430875 136.092653 
+L 234.919125 135.363136 
+L 235.407375 135.243823 
+L 235.895625 134.924521 
+L 236.383875 135.265238 
+L 236.872125 136.207117 
+L 237.360375 136.174615 
+L 237.848625 135.571375 
+L 238.336875 136.59864 
+L 239.313375 134.28433 
+L 239.801625 136.625818 
+L 240.289875 135.830119 
+L 240.778125 133.935287 
+L 240.778125 133.935287 
+" style="fill:none;stroke:#1f77b4;stroke-linecap:square;stroke-width:1.5;"></path>
+   </g>
+   <g id="patch_3">
+    <path d="M 45.478125 143.1 
+L 45.478125 7.2 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"></path>
+   </g>
+   <g id="patch_4">
+    <path d="M 240.778125 143.1 
+L 240.778125 7.2 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"></path>
+   </g>
+   <g id="patch_5">
+    <path d="M 45.478125 143.1 
+L 240.778125 143.1 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"></path>
+   </g>
+   <g id="patch_6">
+    <path d="M 45.478125 7.2 
+L 240.778125 7.2 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"></path>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clippath id="pe082702315">
+   <rect height="135.9" width="195.3" x="45.478125" y="7.2"></rect>
+  </clippath>
+ </defs>
+</svg>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Prediction">
+<a class="anchor" href="#Prediction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prediction<a class="anchor-link" href="#Prediction"> </a>
+</h2>
+<p>출발어 영어 입력에서 도착어 불어 생성은 ᅟpredict 함수를 이용한다. 내부절차는 다음과 같다.</p>
+<ul>
+<li>모델의 Encoder와 Decoder를 별개로 활용</li>
+<li>Decoder는 토큰별로 하나씩 처리하여 문장을 생성</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Seq2SeqEncDec</span><span class="p">,</span> <span class="n">src_sentence</span><span class="p">,</span> <span class="n">src_vocab</span><span class="p">,</span> <span class="n">dst_vocab</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">src_tokens</span> <span class="o">=</span> <span class="n">src_vocab</span><span class="p">[</span><span class="n">src_sentence</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="n">src_vocab</span><span class="p">[</span><span class="s1">'&lt;eos&gt;'</span><span class="p">]]</span>
+    <span class="n">src_valid_len</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="nb">min</span><span class="p">(</span><span class="n">seq_len</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_tokens</span><span class="p">))],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">src_tokens</span> <span class="o">=</span> <span class="n">src_tokens</span><span class="p">[:</span><span class="n">seq_len</span><span class="p">]</span>
+    <span class="n">src_tokens</span> <span class="o">=</span> <span class="n">src_tokens</span> <span class="o">+</span> <span class="p">[</span><span class="n">src_vocab</span><span class="p">[</span><span class="s1">'&lt;pad&gt;'</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">seq_len</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_tokens</span><span class="p">))</span>
+    <span class="n">src_tokens</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">src_tokens</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># add batch dim</span>
+    
+    <span class="n">_</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">enc</span><span class="p">(</span><span class="n">src_tokens</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">dst_vocab</span><span class="p">[</span><span class="s1">'&lt;bos&gt;'</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seq_len</span><span class="p">):</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">dec</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pred</span> <span class="o">==</span> <span class="n">dst_vocab</span><span class="p">[</span><span class="s1">'&lt;eos&gt;'</span><span class="p">]:</span>
+            <span class="k">break</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dst_vocab</span><span class="o">.</span><span class="n">to_tokens</span><span class="p">(</span><span class="n">out</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">predict</span><span class="p">(</span><span class="n">mod_1</span><span class="p">,</span> <span class="s2">"i lost ."</span><span class="p">,</span> <span class="n">src_vocab</span><span class="p">,</span> <span class="n">dst_vocab</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>"j'ai perdu ."</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluation">
+<a class="anchor" href="#Evaluation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Evaluation<a class="anchor-link" href="#Evaluation"> </a>
+</h2>
+<p>d2l의 코드를 거의 그대로 사용하였다. 샘플 결과만 가지고도 성능이 좋지 않은 것을 알 수 있다. 훈련 데이터가 적기도 하지만 Seq2Seq 자체만으로는 한계가 있기 때문이다. Seq2Seq 성능 개선을 위하여 어텐션 등이 개발되었으며 이에 대한 얘기는 다음으로 미루겠다. 다만 Seq2Seq 차체만으로도 RNN 이해를 위한 연습문제로 손색이 없었다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">collections</span>
+
+<span class="k">def</span> <span class="nf">bleu</span><span class="p">(</span><span class="n">pred_seq</span><span class="p">,</span> <span class="n">label_seq</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>  <span class="c1">#@save</span>
+    <span class="sd">"""Compute the BLEU."""</span>
+    <span class="n">pred_tokens</span><span class="p">,</span> <span class="n">label_tokens</span> <span class="o">=</span> <span class="n">pred_seq</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">),</span> <span class="n">label_seq</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">)</span>
+    <span class="n">len_pred</span><span class="p">,</span> <span class="n">len_label</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pred_tokens</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_tokens</span><span class="p">)</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">len_label</span> <span class="o">/</span> <span class="n">len_pred</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">num_matches</span><span class="p">,</span> <span class="n">label_subs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_label</span> <span class="o">-</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">label_subs</span><span class="p">[</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">label_tokens</span><span class="p">[</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">n</span><span class="p">])]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_pred</span> <span class="o">-</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">label_subs</span><span class="p">[</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pred_tokens</span><span class="p">[</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">n</span><span class="p">])]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">num_matches</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">label_subs</span><span class="p">[</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pred_tokens</span><span class="p">[</span><span class="n">i</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">n</span><span class="p">])]</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">score</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">num_matches</span> <span class="o">/</span> <span class="p">(</span><span class="n">len_pred</span> <span class="o">-</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">score</span>
+
+
+<span class="n">engs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'go .'</span><span class="p">,</span> <span class="s2">"i lost ."</span><span class="p">,</span> <span class="s1">'he</span><span class="se">\'</span><span class="s1">s calm .'</span><span class="p">,</span> <span class="s1">'i</span><span class="se">\'</span><span class="s1">m home .'</span><span class="p">]</span>
+<span class="n">fras</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'va !'</span><span class="p">,</span> <span class="s1">'j</span><span class="se">\'</span><span class="s1">ai perdu .'</span><span class="p">,</span> <span class="s1">'il est calme .'</span><span class="p">,</span> <span class="s1">'je suis chez moi .'</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">eng</span><span class="p">,</span> <span class="n">fra</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">engs</span><span class="p">,</span> <span class="n">fras</span><span class="p">):</span>
+    <span class="n">translation</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span>
+        <span class="n">mod_1</span><span class="p">,</span> <span class="n">eng</span><span class="p">,</span> <span class="n">src_vocab</span><span class="p">,</span> <span class="n">dst_vocab</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">eng</span><span class="si">}</span><span class="s1"> =&gt; </span><span class="si">{</span><span class="n">translation</span><span class="si">}</span><span class="s1">, bleu </span><span class="si">{</span><span class="n">bleu</span><span class="p">(</span><span class="n">translation</span><span class="p">,</span> <span class="n">fra</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>go . =&gt; va !, bleu 1.000
+i lost . =&gt; j'ai perdu ., bleu 1.000
+he's calm . =&gt; bonne chance ., bleu 0.000
+i'm home . =&gt; je suis chez moi bon ., bleu 0.803
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/jupyter-blog/nlp/2021/01/14/Seq2Seq.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/jupyter-blog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/jupyter-blog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>An easy to use blogging platform with support for Jupyter Notebooks.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/fastai" title="fastai"><svg class="svg-icon grey"><use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/fastdotai" title="fastdotai"><svg class="svg-icon grey"><use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
