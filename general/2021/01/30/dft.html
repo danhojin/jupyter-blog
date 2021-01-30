@@ -431,7 +431,7 @@ $\displaystyle \frac{4 \sin{\left(t \right)}}{\pi} + \frac{4 \sin{\left(3 t \rig
 <p>(3) $X_k = \frac{1}{N} \sum_{r = 0}^{N - 1} x_r e^{-i (2\pi kr/N)}$</p>
 <p>$x_r = \sum_{k = 0}^{N - 1} X_k e^{i (2\pi kr/N)}$</p>
 <p>푸리에 전개나 변환 관련 식은 응용 분야에 따라 선호하는 형식이 존재하므로 정의를 잘 살펴보아야 한다. numpy에서는 다음과 같이 DFT 식을 정의하였다.</p>
-<p>(4) $A_k = \sum_{r = 0}^{n - 1} a_m e^{-i (2\pi mk/n)}$</p>
+<p>(4) $A_k = \sum_{m = 0}^{n - 1} a_m e^{-i (2\pi mk/n)}$</p>
 <p>$a_m = \frac{1}{n} \sum_{k = 0}^{n - 1} A_k e^{i (2\pi mk/n)}$</p>
 
 </div>
