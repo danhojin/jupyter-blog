@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>노드 간 연결성 예측 | fastpages</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="노드 간 연결성 예측" />
+<meta name="author" content="단호진" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="그래프의 노드 연결성 예측 문제를 dgl 기본 예제로 이해한다." />
+<meta property="og:description" content="그래프의 노드 연결성 예측 문제를 dgl 기본 예제로 이해한다." />
+<link rel="canonical" href="https://danhojin.github.io/jupyter-blog/graph/2021/07/02/link-prediction-graph-nn.html" />
+<meta property="og:url" content="https://danhojin.github.io/jupyter-blog/graph/2021/07/02/link-prediction-graph-nn.html" />
+<meta property="og:site_name" content="fastpages" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-02T00:00:00-05:00" />
+<script type="application/ld+json">
+{"datePublished":"2021-07-02T00:00:00-05:00","url":"https://danhojin.github.io/jupyter-blog/graph/2021/07/02/link-prediction-graph-nn.html","@type":"BlogPosting","dateModified":"2021-07-02T00:00:00-05:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://danhojin.github.io/jupyter-blog/graph/2021/07/02/link-prediction-graph-nn.html"},"author":{"@type":"Person","name":"단호진"},"headline":"노드 간 연결성 예측","description":"그래프의 노드 연결성 예측 문제를 dgl 기본 예제로 이해한다.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/jupyter-blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://danhojin.github.io/jupyter-blog/feed.xml" title="fastpages" /><link rel="shortcut icon" type="image/x-icon" href="/jupyter-blog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/jupyter-blog/">fastpages</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/jupyter-blog/about/">About Me</a><a class="page-link" href="/jupyter-blog/search/">Search</a><a class="page-link" href="/jupyter-blog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">노드 간 연결성 예측</h1><p class="page-description">그래프의 노드 연결성 예측 문제를 dgl 기본 예제로 이해한다.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-02T00:00:00-05:00" itemprop="datePublished">
+        Jul 2, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">단호진</span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/jupyter-blog/categories/#graph">graph</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          <div class="px-2">
+
+    <a href="https://github.com/danhojin/jupyter-blog/tree/master/_notebooks/2021-07-02-link-prediction-graph-nn.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/jupyter-blog/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/danhojin/jupyter-blog/master?filepath=_notebooks%2F2021-07-02-link-prediction-graph-nn.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyter-blog/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/danhojin/jupyter-blog/blob/master/_notebooks/2021-07-02-link-prediction-graph-nn.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyter-blog/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h1"><a href="#그래프-내-노드-연결성">그래프 내 노드 연결성 </a>
+<ul>
+<li class="toc-entry toc-h2"><a href="#가정">가정 </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#negative-사례-추출의-이해">negative 사례 추출의 이해 </a></li>
+<li class="toc-entry toc-h3"><a href="#negative-사례-추출과-훈련-및-검정-데이타-준비">negative 사례 추출과 훈련 및 검정 데이타 준비 </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#GraphSAGE-model">GraphSAGE model </a></li>
+<li class="toc-entry toc-h2"><a href="#EdgeScore-model">EdgeScore model </a></li>
+<li class="toc-entry toc-h2"><a href="#마무리">마무리 </a></li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-02-link-prediction-graph-nn.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="그래프-내-노드-연결성">
+<a class="anchor" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EB%82%B4-%EB%85%B8%EB%93%9C-%EC%97%B0%EA%B2%B0%EC%84%B1" aria-hidden="true"><span class="octicon octicon-link"></span></a>그래프 내 노드 연결성<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EB%82%B4-%EB%85%B8%EB%93%9C-%EC%97%B0%EA%B2%B0%EC%84%B1"> </a>
+</h1>
+<p>그래프의 노드 간 엣지 혹은 링크 예측은 여러 응용이 존재한다. 사회 연결망 또는 소셜 네트워크에서 친구를 추천하거나, 아이템 추천 시스템, 지식 그래프를 완결시키는데 링크 예측을 사용할 수 있다. dgl 패키지가 제공하는 <a href="https://docs.dgl.ai/tutorials/blitz/4_link_predict.html">기본 예제</a>를 통하여 링크 예측 문제를 이해하고, 패키지의 기본 용례를 살펴보겠다.</p>
+<p>예제에 사용하는 Cora 데이타셋은 인용 네트워크로 <a href="https://arxiv.org/abs/1609.02907">Kipf의 논문</a>을 참고하자.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">dgl</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">comb</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'torch: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'dgl:   </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dgl</span><span class="o">.</span><span class="n">__version__</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="kn">import</span> <span class="nn">dgl.data</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">CoraGraphDataset</span><span class="p">()</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Using backend: pytorch
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>torch: 1.9.0+cu102
+dgl:   0.6.1
+
+  NumNodes: 2708
+  NumEdges: 10556
+  NumFeats: 1433
+  NumClasses: 7
+  NumTrainingSamples: 140
+  NumValidationSamples: 500
+  NumTestSamples: 1000
+Done loading data from cached files.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Cora 데이타셋은 2708개의 노드와 10556 / 2 = 5278 개의 엣지가 있는 무향 그래프이다. 각 노드는 1433 차원의 특징 벡터로 표현되며, 7개 클래스로 레이블되어 있다. <a href="https://en.wikipedia.org/wiki/Dense_graph">그래프의 밀도</a>는 0.144%이다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nCk</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">comb</span><span class="p">(</span><span class="mi">2708</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'n choose k: </span><span class="si">{</span><span class="n">nCk</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'positive examples: </span><span class="si">{</span><span class="mi">5278</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'negative examples: </span><span class="si">{</span><span class="n">nCk</span> <span class="o">-</span> <span class="mi">5278</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Graph density: </span><span class="si">{:.3%}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">5278</span> <span class="o">/</span> <span class="n">nCk</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>n choose k: 3665278
+positive examples: 5278
+negative examples: 3660000
+Graph density: 0.144%
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">ndata</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[('feat',
+  tensor([[0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          ...,
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.],
+          [0., 0., 0.,  ..., 0., 0., 0.]])),
+ ('label', tensor([3, 4, 4,  ..., 3, 3, 3])),
+ ('test_mask', tensor([False, False, False,  ...,  True,  True,  True])),
+ ('train_mask', tensor([ True,  True,  True,  ..., False, False, False])),
+ ('val_mask', tensor([False, False, False,  ..., False, False, False]))]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(tensor([   0,    0,    0,  ..., 2707, 2707, 2707]),
+ tensor([ 633, 1862, 2582,  ...,  598, 1473, 2706]))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="가정">
+<a class="anchor" href="#%EA%B0%80%EC%A0%95" aria-hidden="true"><span class="octicon octicon-link"></span></a>가정<a class="anchor-link" href="#%EA%B0%80%EC%A0%95"> </a>
+</h2>
+<p>임의로 두 노드 사이에 엣지가 있을 확률은 매우 낮다. 주어진 엣지를 positive 사례라고 부르자. 그리고 나머지 가능한 엣지에서 positive 사례를 찾을 가능성은 그래프 밀도 정도라 가정하자. positive example 수 만큼 추가로 사례를 추출하여 negative 사례라고 하자. negative 사례에 극소수는 실제로 엣지가 존재할 수 있지만 노이즈로 간주한다. positive/negative 사례로 나누고 분류 문제로 문제를 구성하여 링크 예측 문제를 해결하겠다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="negative-사례-추출의-이해">
+<a class="anchor" href="#negative-%EC%82%AC%EB%A1%80-%EC%B6%94%EC%B6%9C%EC%9D%98-%EC%9D%B4%ED%95%B4" aria-hidden="true"><span class="octicon octicon-link"></span></a>negative 사례 추출의 이해<a class="anchor-link" href="#negative-%EC%82%AC%EB%A1%80-%EC%B6%94%EC%B6%9C%EC%9D%98-%EC%9D%B4%ED%95%B4"> </a>
+</h3>
+<p>인접 행렬은 엣지의 유무를 확인할 수 있으므로 negative 사례를 추출하는데 사용할 수 있다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+
+<span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+
+<span class="n">G</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+<span class="n">G</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">])</span>
+<span class="n">G</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">(),</span> <span class="n">G</span><span class="o">.</span><span class="n">number_of_edges</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(6, 7)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">with_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">font_weight</span><span class="o">=</span><span class="s1">'bold'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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%0A">
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">adj</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">)),</span> <span class="p">(</span><span class="n">u</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">v</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+<span class="n">adj</span><span class="o">.</span><span class="n">todense</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>matrix([[0., 1., 0., 0., 1., 0.],
+        [1., 0., 1., 0., 1., 0.],
+        [0., 1., 0., 1., 0., 0.],
+        [0., 0., 1., 0., 1., 1.],
+        [1., 1., 0., 1., 0., 0.],
+        [0., 0., 0., 1., 0., 0.]])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">adj_neg</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">adj</span><span class="o">.</span><span class="n">todense</span><span class="p">()</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">adj_neg</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>matrix([[0., 0., 1., 1., 0., 1.],
+        [0., 0., 0., 1., 0., 1.],
+        [1., 0., 0., 0., 1., 1.],
+        [1., 1., 0., 0., 0., 0.],
+        [0., 0., 1., 0., 0., 1.],
+        [1., 1., 1., 0., 1., 0.]])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">adj_neg</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(array([0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5]),
+ array([2, 3, 5, 3, 5, 0, 4, 5, 0, 1, 2, 5, 0, 1, 2, 4]))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="negative-사례-추출과-훈련-및-검정-데이타-준비">
+<a class="anchor" href="#negative-%EC%82%AC%EB%A1%80-%EC%B6%94%EC%B6%9C%EA%B3%BC-%ED%9B%88%EB%A0%A8-%EB%B0%8F-%EA%B2%80%EC%A0%95-%EB%8D%B0%EC%9D%B4%ED%83%80-%EC%A4%80%EB%B9%84" aria-hidden="true"><span class="octicon octicon-link"></span></a>negative 사례 추출과 훈련 및 검정 데이타 준비<a class="anchor-link" href="#negative-%EC%82%AC%EB%A1%80-%EC%B6%94%EC%B6%9C%EA%B3%BC-%ED%9B%88%EB%A0%A8-%EB%B0%8F-%EA%B2%80%EC%A0%95-%EB%8D%B0%EC%9D%B4%ED%83%80-%EC%A4%80%EB%B9%84"> </a>
+</h3>
+<p>양방향 엣지를 가지고 있으므로 검정 데이타가 누구 되지 않도록 주의해서 분할하였다. 각 노드의 특징 평가를 위하여 tr_g, 엣지 점수 평가를 위하여 tr_p_g, te_p_g, tr_n_g, te_n_g 그래프를 준비하였다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()</span>
+<span class="n">p_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">u</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">numpy</span><span class="p">()]</span>
+<span class="n">p_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">p_edges</span> <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+<span class="n">num_edges</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_edges</span><span class="p">)</span>
+<span class="n">num_train</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_edges</span> <span class="o">*</span> <span class="mf">0.8</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">p_edges</span><span class="p">)</span>
+<span class="n">tr_p_edges</span> <span class="o">=</span> <span class="n">p_edges</span><span class="p">[:</span><span class="n">num_train</span><span class="p">]</span>
+<span class="n">tr_p_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">tr_p_edges</span><span class="p">,</span> <span class="n">tr_p_edges</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]]</span>
+<span class="n">tr_p_g</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">graph</span><span class="p">((</span><span class="n">tr_p_edges</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">tr_p_edges</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">num_nodes</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">())</span>
+
+<span class="n">te_p_edges</span> <span class="o">=</span> <span class="n">p_edges</span><span class="p">[</span><span class="n">num_train</span><span class="p">:]</span>
+<span class="n">te_p_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">te_p_edges</span><span class="p">,</span> <span class="n">te_p_edges</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]]</span>
+<span class="n">te_p_g</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">graph</span><span class="p">((</span><span class="n">te_p_edges</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">te_p_edges</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">num_nodes</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">())</span>
+
+<span class="n">tr_p_g</span><span class="p">,</span> <span class="n">te_p_g</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(Graph(num_nodes=2708, num_edges=8444,
+       ndata_schemes={}
+       edata_schemes={}),
+ Graph(num_nodes=2708, num_edges=2112,
+       ndata_schemes={}
+       edata_schemes={}))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">te_p_edges_set</span> <span class="o">=</span> <span class="p">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">te_p_edges</span><span class="p">}</span>
+
+<span class="n">eids</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">numpy</span><span class="p">()))</span> <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">te_p_edges_set</span><span class="p">]</span>
+<span class="nb">len</span><span class="p">(</span><span class="n">eids</span><span class="p">),</span> <span class="n">eids</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(2112, [1, 7, 8, 9, 11, 18, 23, 38, 40, 41])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tr_g</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">remove_edges</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">eids</span><span class="p">)</span>
+<span class="n">tr_g</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>Graph(num_nodes=2708, num_edges=8444,
+      ndata_schemes={'feat': Scheme(shape=(1433,), dtype=torch.float32), 'label': Scheme(shape=(), dtype=torch.int64), 'test_mask': Scheme(shape=(), dtype=torch.bool), 'train_mask': Scheme(shape=(), dtype=torch.bool), 'val_mask': Scheme(shape=(), dtype=torch.bool)}
+      edata_schemes={})</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># num_edges = num_edges * 2</span>
+<span class="c1"># num_train = num_train * 2</span>
+
+<span class="n">adj</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">number_of_edges</span><span class="p">()),</span> <span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">v</span><span class="o">.</span><span class="n">numpy</span><span class="p">())))</span>
+<span class="n">adj_neg</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">adj</span><span class="o">.</span><span class="n">todense</span><span class="p">()</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">())</span>
+<span class="n">u_neg</span><span class="p">,</span> <span class="n">v_neg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">adj_neg</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">n_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[[</span><span class="n">uv</span> <span class="k">for</span> <span class="n">uv</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">u_neg</span><span class="p">,</span> <span class="n">v_neg</span><span class="p">]</span> <span class="k">if</span> <span class="n">uv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">uv</span><span class="p">[</span><span class="mi">1</span><span class="p">]]]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">n_edges</span><span class="p">)</span>
+<span class="n">tr_n_edges</span> <span class="o">=</span> <span class="n">n_edges</span><span class="p">[:</span><span class="n">num_train</span><span class="p">]</span>
+<span class="n">tr_n_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">tr_n_edges</span><span class="p">,</span> <span class="n">tr_n_edges</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]]</span>
+<span class="n">tr_n_g</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">graph</span><span class="p">((</span><span class="n">tr_n_edges</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">tr_n_edges</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">num_nodes</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">())</span>
+
+<span class="n">te_n_edges</span> <span class="o">=</span> <span class="n">n_edges</span><span class="p">[</span><span class="n">num_train</span><span class="p">:</span><span class="n">num_edges</span><span class="p">]</span>
+<span class="n">te_n_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">te_n_edges</span><span class="p">,</span> <span class="n">te_n_edges</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]]</span>
+<span class="n">te_n_g</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">graph</span><span class="p">((</span><span class="n">te_n_edges</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">te_n_edges</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">num_nodes</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">())</span>
+
+<span class="n">tr_n_g</span><span class="p">,</span> <span class="n">te_n_g</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(Graph(num_nodes=2708, num_edges=8444,
+       ndata_schemes={}
+       edata_schemes={}),
+ Graph(num_nodes=2708, num_edges=2112,
+       ndata_schemes={}
+       edata_schemes={}))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="GraphSAGE-model">
+<a class="anchor" href="#GraphSAGE-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>GraphSAGE model<a class="anchor-link" href="#GraphSAGE-model"> </a>
+</h2>
+<p>링크를 예측 문제는 우리가 가진 그래프의 엣지 정보가 불완전하다는 것을 의미한다. 정확한 그래프 라플라스 행렬을 알 지 못하므로 GAGEConv 모델을 이용한다. SAGE는 Sample &amp; Aggregate에서 나온 말이다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">dgl.nn</span> <span class="kn">import</span> <span class="n">SAGEConv</span>
+
+
+<span class="k">class</span> <span class="nc">GraphSAGE</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_feats</span><span class="p">,</span> <span class="n">h_feats</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">SAGEConv</span><span class="p">(</span><span class="n">in_feats</span><span class="p">,</span> <span class="n">h_feats</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">SAGEConv</span><span class="p">(</span><span class="n">h_feats</span><span class="p">,</span> <span class="n">h_feats</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">in_feat</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">in_feat</span><span class="p">))</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">h</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="EdgeScore-model">
+<a class="anchor" href="#EdgeScore-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>EdgeScore model<a class="anchor-link" href="#EdgeScore-model"> </a>
+</h2>
+<p>그래프에서 각 노드의 특징으로부터 엣지의 특성값을 도출하는 모델을 작성하였다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">EdgeScore</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>  <span class="c1"># original name: MLPPredictor</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h_feats</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">h_feats</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">h_feats</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">h_feats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edges</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Computes a scalar score for each edge of the given graph.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        edges :</span>
+<span class="sd">            Has three members ``src``, ``dst`` and ``data``, each of</span>
+<span class="sd">            which is a dictionary representing the features of the</span>
+<span class="sd">            source nodes, the destination nodes, and the edges</span>
+<span class="sd">            themselves.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary of new edge features.</span>
+<span class="sd">        """</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">edges</span><span class="o">.</span><span class="n">src</span><span class="p">[</span><span class="s1">'h'</span><span class="p">],</span> <span class="n">edges</span><span class="o">.</span><span class="n">dst</span><span class="p">[</span><span class="s1">'h'</span><span class="p">]],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">'score'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">W2</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W1</span><span class="p">(</span><span class="n">h</span><span class="p">)))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)}</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">g</span><span class="o">.</span><span class="n">local_scope</span><span class="p">():</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">'h'</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">apply_edges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_edges</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">edata</span><span class="p">[</span><span class="s1">'score'</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_loss</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">):</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">])</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">pos_score</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">neg_score</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])])</span>
+    <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">binary_cross_entropy_with_logits</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">compute_auc</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">):</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">])</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">pos_score</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">neg_score</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])])</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">scores</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">node_feature_model</span> <span class="o">=</span> <span class="n">GraphSAGE</span><span class="p">(</span><span class="n">tr_g</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">'feat'</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">32</span><span class="p">)</span>
+<span class="n">edge_score_model</span> <span class="o">=</span> <span class="n">EdgeScore</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
+    <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">node_feature_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">edge_score_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+
+<span class="c1"># ----------- 4. training -------------------------------- #</span>
+<span class="n">all_logits</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">61</span><span class="p">):</span>
+    <span class="c1"># forward</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">node_feature_model</span><span class="p">(</span><span class="n">tr_g</span><span class="p">,</span> <span class="n">tr_g</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">'feat'</span><span class="p">])</span>
+    <span class="n">pos_score</span> <span class="o">=</span> <span class="n">edge_score_model</span><span class="p">(</span><span class="n">tr_p_g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="n">neg_score</span> <span class="o">=</span> <span class="n">edge_score_model</span><span class="p">(</span><span class="n">tr_n_g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">compute_loss</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">)</span>
+
+    <span class="c1"># backward</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">5</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">pos_score</span> <span class="o">=</span> <span class="n">edge_score_model</span><span class="p">(</span><span class="n">te_p_g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+            <span class="n">neg_score</span> <span class="o">=</span> <span class="n">edge_score_model</span><span class="p">(</span><span class="n">te_n_g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+            <span class="n">va_loss</span> <span class="o">=</span> <span class="n">compute_loss</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">:</span><span class="s1">03d</span><span class="si">}</span><span class="s1">, loss: </span><span class="si">{</span><span class="n">loss</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1"> va loss: </span><span class="si">{</span><span class="n">va_loss</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="c1"># ----------- 5. check results ------------------------ #</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">roc_auc_score</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">pos_score</span> <span class="o">=</span> <span class="n">edge_score_model</span><span class="p">(</span><span class="n">te_p_g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="n">neg_score</span> <span class="o">=</span> <span class="n">edge_score_model</span><span class="p">(</span><span class="n">te_n_g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'AUC'</span><span class="p">,</span> <span class="n">compute_auc</span><span class="p">(</span><span class="n">pos_score</span><span class="p">,</span> <span class="n">neg_score</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Epoch 005, loss: 0.693 va loss: 0.693
+Epoch 010, loss: 0.691 va loss: 0.693
+Epoch 015, loss: 0.689 va loss: 0.692
+Epoch 020, loss: 0.686 va loss: 0.691
+Epoch 025, loss: 0.680 va loss: 0.688
+Epoch 030, loss: 0.673 va loss: 0.685
+Epoch 035, loss: 0.662 va loss: 0.681
+Epoch 040, loss: 0.647 va loss: 0.676
+Epoch 045, loss: 0.629 va loss: 0.672
+Epoch 050, loss: 0.608 va loss: 0.671
+Epoch 055, loss: 0.586 va loss: 0.676
+Epoch 060, loss: 0.564 va loss: 0.690
+
+AUC 0.6191352444903581
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="마무리">
+<a class="anchor" href="#%EB%A7%88%EB%AC%B4%EB%A6%AC" aria-hidden="true"><span class="octicon octicon-link"></span></a>마무리<a class="anchor-link" href="#%EB%A7%88%EB%AC%B4%EB%A6%AC"> </a>
+</h2>
+<p>dgl 패키지를 기본 예제를 통하여 링크 예측 문제를 살펴보면서 dgl 패키지는 코드 가독성이 높다는 인상을 받았다. 즉, dgl 패키지를 처음 접해도 그래프에 대한 개념만 갖춘다면 내 생각을 코드로 구성하여 실험해 보기 쉽다는 뜻으로, 여러 응용을 시도해 보기 좋은 패키지이다.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/jupyter-blog/graph/2021/07/02/link-prediction-graph-nn.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/jupyter-blog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/jupyter-blog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>An easy to use blogging platform with support for Jupyter Notebooks.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/fastai" title="fastai"><svg class="svg-icon grey"><use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/fastdotai" title="fastdotai"><svg class="svg-icon grey"><use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
