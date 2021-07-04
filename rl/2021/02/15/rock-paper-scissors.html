@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>가위바위보 강화학습 | fastpages</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="가위바위보 강화학습" />
+<meta name="author" content="단호진" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="두 에이전트가 겨루는 가위바위보 환경에서 강화학습을 통하여 승리 정책을 학습한다." />
+<meta property="og:description" content="두 에이전트가 겨루는 가위바위보 환경에서 강화학습을 통하여 승리 정책을 학습한다." />
+<link rel="canonical" href="https://danhojin.github.io/jupyter-blog/rl/2021/02/15/rock-paper-scissors.html" />
+<meta property="og:url" content="https://danhojin.github.io/jupyter-blog/rl/2021/02/15/rock-paper-scissors.html" />
+<meta property="og:site_name" content="fastpages" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-02-15T00:00:00-06:00" />
+<script type="application/ld+json">
+{"datePublished":"2021-02-15T00:00:00-06:00","url":"https://danhojin.github.io/jupyter-blog/rl/2021/02/15/rock-paper-scissors.html","@type":"BlogPosting","dateModified":"2021-02-15T00:00:00-06:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://danhojin.github.io/jupyter-blog/rl/2021/02/15/rock-paper-scissors.html"},"author":{"@type":"Person","name":"단호진"},"headline":"가위바위보 강화학습","description":"두 에이전트가 겨루는 가위바위보 환경에서 강화학습을 통하여 승리 정책을 학습한다.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/jupyter-blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://danhojin.github.io/jupyter-blog/feed.xml" title="fastpages" /><link rel="shortcut icon" type="image/x-icon" href="/jupyter-blog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/jupyter-blog/">fastpages</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/jupyter-blog/about/">About Me</a><a class="page-link" href="/jupyter-blog/search/">Search</a><a class="page-link" href="/jupyter-blog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">가위바위보 강화학습</h1><p class="page-description">두 에이전트가 겨루는 가위바위보 환경에서 강화학습을 통하여 승리 정책을 학습한다.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-02-15T00:00:00-06:00" itemprop="datePublished">
+        Feb 15, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">단호진</span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      9 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/jupyter-blog/categories/#rl">rl</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          <div class="px-2">
+
+    <a href="https://github.com/danhojin/jupyter-blog/tree/master/_notebooks/2021-02-15-rock-paper-scissors.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/jupyter-blog/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/danhojin/jupyter-blog/master?filepath=_notebooks%2F2021-02-15-rock-paper-scissors.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyter-blog/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/danhojin/jupyter-blog/blob/master/_notebooks/2021-02-15-rock-paper-scissors.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyter-blog/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#가위바위보-환경">가위바위보 환경 </a></li>
+<li class="toc-entry toc-h2"><a href="#정책">정책 </a></li>
+<li class="toc-entry toc-h2"><a href="#Custom-policy-with-template">Custom policy with template </a></li>
+<li class="toc-entry toc-h2"><a href="#Custom-loss-model">Custom loss model </a></li>
+<li class="toc-entry toc-h2"><a href="#트레이너-설정-및-학습">트레이너 설정 및 학습 </a></li>
+<li class="toc-entry toc-h2"><a href="#맺으며">맺으며 </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-02-15-rock-paper-scissors.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>마지막 갱신: 2021-07-04</p>
+<p>ray 패키지의 rllib은 사용자 모델을 만들어 쓸 수 있게 설계되어 있다. 하지만 세부적인 사항을 이해하고 사용자 모델을 쓰기가 쉽지 않다. 여기에 내부 코드의 이해를 위하여 몇 가지 코드를 작성하여 시험해 본다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">ray</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.utils.framework</span> <span class="kn">import</span> <span class="n">try_import_torch</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.agents.pg</span> <span class="kn">import</span> <span class="n">PGTorchPolicy</span><span class="p">,</span> <span class="n">PGTrainer</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.examples.env.rock_paper_scissors</span> <span class="kn">import</span> <span class="n">RockPaperScissors</span>
+
+<span class="n">torch</span><span class="p">,</span> <span class="n">nn</span> <span class="o">=</span> <span class="n">try_import_torch</span><span class="p">()</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span> <span class="n">ray</span><span class="o">.</span><span class="n">__version__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>('1.9.0+cu102', '2.0.0.dev0')</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="가위바위보-환경">
+<a class="anchor" href="#%EA%B0%80%EC%9C%84%EB%B0%94%EC%9C%84%EB%B3%B4-%ED%99%98%EA%B2%BD" aria-hidden="true"><span class="octicon octicon-link"></span></a>가위바위보 환경<a class="anchor-link" href="#%EA%B0%80%EC%9C%84%EB%B0%94%EC%9C%84%EB%B3%B4-%ED%99%98%EA%B2%BD"> </a>
+</h2>
+<ul>
+<li>player1과 player2가 취할 수 있는 action은 0, 1, 2이고, 관측치는 상대방의 action에서 나오는 0, 1, 2이다.</li>
+<li>env.reset()은 첫 관측치 {'player1': 0, 'player2': 0}를 내어 준다.</li>
+<li>env.step() 함수는 obs, rewards, done, info를 돌려준다.</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">env_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">RockPaperScissors</span><span class="p">(</span><span class="n">env_config</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="n">obs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{'player1': 0, 'player2': 0}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">observation_space</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(Discrete(3), Discrete(3))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">obs</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">player1</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">player2</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'obs   : </span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'reward: </span><span class="si">{</span><span class="n">reward</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'done  : </span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'info  : </span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>obs   : {'player1': 2, 'player2': 1}
+reward: {'player1': -1, 'player2': 1}
+done  : {'__all__': False}
+info  : {}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">obs</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">player1</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">player2</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'obs   : </span><span class="si">{</span><span class="n">obs</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'reward: </span><span class="si">{</span><span class="n">reward</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'done  : </span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'info  : </span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>obs   : {'player1': 1, 'player2': 1}
+reward: {'player1': 0, 'player2': 0}
+done  : {'__all__': False}
+info  : {}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="정책">
+<a class="anchor" href="#%EC%A0%95%EC%B1%85" aria-hidden="true"><span class="octicon octicon-link"></span></a>정책<a class="anchor-link" href="#%EC%A0%95%EC%B1%85"> </a>
+</h2>
+<p>정책(Policy)은 에이전트가 관측된 환경, 이전 보상 이력을 참고하여 어떤 행동을 취하면 좋은지 결정한다. 에이전트가 둘인 가위바위보 게임에서 학습 가능한 learned 정책과 RandomMove, BeatLastHeuristic, AlwaysSameHeuristic 정책에서 하나를 뽑아 강확학습을 수행하였다. 가위바위보의 최고 전략은 RandomMove로 learned 정책은 이에 도달하는 결과를 보일 것이고, 그 밖에 BeatLastHeuristic, AlwaysSameHeuristic에 데해서는 쉽게 이길 수 있을 것이다.</p>
+<p>새로운 정책을 개발한다면 Policy 클래스를 상속하고 compute_actions에 필요한 로직을 구현하면 된다. RandomMove 정책은 obs_batch에 대해서만 고려하여 배치 크기만큼의 임의 행동을 돌려준다. kwargs에 필수 생성 인자 내용을 정리하였다. 환경의 action_space와 observation_space가 그것이다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.policy.policy</span> <span class="kn">import</span> <span class="n">Policy</span>
+<span class="c1"># from ray.rllib.policy.view_requirement import ViewRequirement</span>
+
+
+<span class="k">class</span> <span class="nc">RandomMove</span><span class="p">(</span><span class="n">Policy</span><span class="p">):</span>
+    <span class="sd">"""Pick a random move"""</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs_space</span><span class="p">,</span> <span class="n">act_space</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">obs_space</span><span class="p">,</span> <span class="n">act_space</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">random_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span>
+            <span class="n">RockPaperScissors</span><span class="o">.</span><span class="n">ROCK</span><span class="p">,</span>
+            <span class="n">RockPaperScissors</span><span class="o">.</span><span class="n">PAPER</span><span class="p">,</span>
+            <span class="n">RockPaperScissors</span><span class="o">.</span><span class="n">SCISSORS</span><span class="p">,</span>
+        <span class="p">])</span>
+    
+    <span class="k">def</span> <span class="nf">compute_actions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">obs_batch</span><span class="p">,</span>
+        <span class="n">state_batches</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">prev_action_batch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">prev_reward_batch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">info_batch</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">episodes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">"""Returns:</span>
+<span class="sd">            Tuple:</span>
+<span class="sd">                actions: [BATCH_SIZE, ACTION_SHAPE]</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">random_action</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">obs_batch</span><span class="p">],</span> <span class="p">[],</span> <span class="p">{}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">random_policy</span> <span class="o">=</span> <span class="n">RandomMove</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="p">,</span> <span class="p">{})</span>
+<span class="n">random_policy</span><span class="o">.</span><span class="n">compute_actions</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>([1, 2, 2], [], {})</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Custom-policy-with-template">
+<a class="anchor" href="#Custom-policy-with-template" aria-hidden="true"><span class="octicon octicon-link"></span></a>Custom policy with template<a class="anchor-link" href="#Custom-policy-with-template"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ray.rllib.policy.torch_policy_template</span> <span class="kn">import</span> <span class="n">build_policy_class</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.policy.sample_batch</span> <span class="kn">import</span> <span class="n">SampleBatch</span>
+
+<span class="k">def</span> <span class="nf">policy_gradient_loss</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dist_class</span><span class="p">,</span> <span class="n">train_batch</span><span class="p">):</span>
+    <span class="n">logits</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">from_batch</span><span class="p">(</span><span class="n">train_batch</span><span class="p">)</span>
+    <span class="n">action_dist</span> <span class="o">=</span> <span class="n">dist_class</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+    <span class="n">log_probs</span> <span class="o">=</span> <span class="n">action_dist</span><span class="o">.</span><span class="n">logp</span><span class="p">(</span><span class="n">train_batch</span><span class="p">[</span><span class="n">SampleBatch</span><span class="o">.</span><span class="n">ACTIONS</span><span class="p">])</span>
+<span class="c1">#     print(train_batch[SampleBatch.REWARDS].dtype)</span>
+<span class="c1">#     print(log_probs.dtype)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">train_batch</span><span class="p">[</span><span class="n">SampleBatch</span><span class="o">.</span><span class="n">REWARDS</span><span class="p">]</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">log_probs</span><span class="p">)</span>
+
+<span class="n">MyTorchPolicy</span> <span class="o">=</span> <span class="n">build_policy_class</span><span class="p">(</span>
+    <span class="n">framework</span><span class="o">=</span><span class="s1">'torch'</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'MyTorchPolicy'</span><span class="p">,</span> <span class="n">loss_fn</span><span class="o">=</span><span class="n">policy_gradient_loss</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Custom-loss-model">
+<a class="anchor" href="#Custom-loss-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Custom loss model<a class="anchor-link" href="#Custom-loss-model"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">ray.rllib.models.modelv2</span> <span class="kn">import</span> <span class="n">ModelV2</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.models</span> <span class="kn">import</span> <span class="n">ModelCatalog</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.models.torch.torch_action_dist</span> <span class="kn">import</span> <span class="n">TorchCategorical</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.models.torch.torch_modelv2</span> <span class="kn">import</span> <span class="n">TorchModelV2</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.models.torch.fcnet</span> <span class="kn">import</span> <span class="n">FullyConnectedNetwork</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.utils.annotations</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.utils.framework</span> <span class="kn">import</span> <span class="n">TensorType</span>
+
+
+<span class="k">class</span> <span class="nc">TorchCustomLossModel</span><span class="p">(</span><span class="n">TorchModelV2</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs_space</span><span class="p">,</span> <span class="n">action_space</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">,</span> <span class="n">model_config</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">TorchModelV2</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs_space</span><span class="p">,</span> <span class="n">action_space</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">,</span> <span class="n">model_config</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'model config: </span><span class="si">{</span><span class="n">model_config</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">fcnet</span> <span class="o">=</span> <span class="n">FullyConnectedNetwork</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">obs_space</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span><span class="p">,</span>
+            <span class="n">num_outputs</span><span class="p">,</span>
+            <span class="n">model_config</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"fcnet"</span>
+        <span class="p">)</span>
+        
+    <span class="nd">@override</span><span class="p">(</span><span class="n">ModelV2</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dict</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">seq_lens</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fcnet</span><span class="p">(</span><span class="n">input_dict</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">seq_lens</span><span class="p">)</span>
+    
+    <span class="nd">@override</span><span class="p">(</span><span class="n">ModelV2</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">value_function</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fcnet</span><span class="o">.</span><span class="n">value_function</span><span class="p">()</span>
+    
+    <span class="nd">@override</span><span class="p">(</span><span class="n">ModelV2</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">custom_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">policy_loss</span><span class="p">:</span> <span class="n">TensorType</span><span class="p">,</span>
+                    <span class="n">loss_inputs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorType</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">TensorType</span><span class="p">:</span>
+        <span class="n">logits</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">({</span><span class="s1">'obs'</span><span class="p">:</span> <span class="n">loss_inputs</span><span class="p">[</span><span class="s1">'obs'</span><span class="p">]},</span> <span class="p">[],</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">action_dist</span> <span class="o">=</span> <span class="n">TorchCategorical</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span><span class="p">)</span>
+        <span class="n">imitation_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="o">-</span><span class="n">action_dist</span><span class="o">.</span><span class="n">logp</span><span class="p">(</span><span class="n">loss_inputs</span><span class="p">[</span><span class="s1">'actions'</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">policy_loss</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">imitation_loss_metric</span> <span class="o">=</span> <span class="n">imitation_loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">policy_loss_metric</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="n">policy_loss</span>
+        <span class="p">])</span>
+        
+        <span class="k">return</span> <span class="p">[</span><span class="n">loss_</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">imitation_loss</span> <span class="k">for</span> <span class="n">loss_</span> <span class="ow">in</span> <span class="n">policy_loss</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">'policy_loss'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy_loss_metric</span><span class="p">,</span>
+            <span class="s1">'imitation_loss'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">imitation_loss_metric</span><span class="p">,</span>
+        <span class="p">}</span>
+    
+    
+<span class="n">ModelCatalog</span><span class="o">.</span><span class="n">register_custom_model</span><span class="p">(</span><span class="s1">'my_torch_model'</span><span class="p">,</span> <span class="n">TorchCustomLossModel</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="트레이너-설정-및-학습">
+<a class="anchor" href="#%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%84%88-%EC%84%A4%EC%A0%95-%EB%B0%8F-%ED%95%99%EC%8A%B5" aria-hidden="true"><span class="octicon octicon-link"></span></a>트레이너 설정 및 학습<a class="anchor-link" href="#%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%84%88-%EC%84%A4%EC%A0%95-%EB%B0%8F-%ED%95%99%EC%8A%B5"> </a>
+</h2>
+<p>앞서 정의한 RandomMove외에 ray에서 제공하는 BeatLastHeuristic, AlwaysSameHeuristic 정책을 추가하였다.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">ray</span>
+<span class="kn">from</span> <span class="nn">gym.spaces</span> <span class="kn">import</span> <span class="n">Discrete</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.agents.registry</span> <span class="kn">import</span> <span class="n">get_trainer_class</span>
+<span class="kn">from</span> <span class="nn">ray.rllib.examples.policy.rock_paper_scissors_dummies</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BeatLastHeuristic</span><span class="p">,</span> <span class="n">AlwaysSameHeuristic</span>
+<span class="p">)</span>
+
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'env'</span><span class="p">:</span> <span class="n">RockPaperScissors</span><span class="p">,</span>
+    <span class="s1">'gamma'</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
+    <span class="s1">'num_gpus'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s1">'num_workers'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s1">'num_envs_per_worker'</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s1">'train_batch_size'</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>  <span class="c1"># for the policy model</span>
+    <span class="s1">'multiagent'</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">'policies'</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">'random_move'</span><span class="p">:</span> <span class="p">(</span><span class="n">RandomMove</span><span class="p">,</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="p">{}),</span>
+            <span class="s1">'beat_last'</span><span class="p">:</span> <span class="p">(</span><span class="n">BeatLastHeuristic</span><span class="p">,</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="p">{}),</span>
+            <span class="s1">'always_same'</span><span class="p">:</span> <span class="p">(</span><span class="n">AlwaysSameHeuristic</span><span class="p">,</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="p">{}),</span>
+            <span class="s1">'learned0'</span><span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="p">{</span>
+                <span class="s1">'framework'</span><span class="p">:</span> <span class="s1">'torch'</span><span class="p">,</span>
+                <span class="s1">'model'</span><span class="p">:</span> <span class="p">{},</span>  <span class="c1"># use default</span>
+            <span class="p">}),</span>
+            <span class="s1">'learned1'</span><span class="p">:</span> <span class="p">(</span><span class="n">MyTorchPolicy</span><span class="p">,</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="p">{</span>
+                <span class="s1">'framework'</span><span class="p">:</span> <span class="s1">'torch'</span><span class="p">,</span>
+                <span class="s1">'model'</span><span class="p">:</span> <span class="p">{},</span>  <span class="c1"># use default</span>
+            <span class="p">}),</span>
+            <span class="s1">'learned2'</span><span class="p">:</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">Discrete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="p">{</span>
+                <span class="s1">'framework'</span><span class="p">:</span> <span class="s1">'torch'</span><span class="p">,</span>
+                <span class="s1">'model'</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">'custom_model'</span><span class="p">:</span> <span class="s1">'my_torch_model'</span><span class="p">,</span>
+                    <span class="s1">'custom_model_config'</span><span class="p">:</span> <span class="p">{},</span>
+                <span class="p">},</span>  <span class="c1"># use default</span>
+            <span class="p">}),</span>
+        <span class="p">},</span>
+        <span class="s1">'policy_mapping_fn'</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">agent_id</span><span class="p">,</span> <span class="n">episode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s1">'learned2'</span> <span class="k">if</span> <span class="n">agent_id</span> <span class="o">==</span> <span class="s1">'player1'</span> <span class="k">else</span> <span class="s1">'beat_last'</span><span class="p">),</span>
+        <span class="s1">'policies_to_train'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'learned0'</span><span class="p">,</span> <span class="s1">'learned1'</span><span class="p">,</span> <span class="s1">'learned2'</span><span class="p">],</span>
+    <span class="p">},</span>
+    <span class="s1">'framework'</span><span class="p">:</span> <span class="s1">'torch'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># ray.shutdown()</span>
+<span class="n">ray</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">get_trainer_class</span><span class="p">(</span><span class="s1">'PG'</span><span class="p">)(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>2021-07-04 11:54:03,897	INFO services.py:1330 -- View the Ray dashboard at <span class="ansi-green-intense-fg ansi-bold">http://127.0.0.1:8265</span>
+2021-07-04 11:54:04,893	INFO trainer.py:714 -- Current log_level is WARN. For more information, set 'log_level': 'INFO' / 'DEBUG' or use the -v and -vv flags.
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>model config: {'_use_default_native_models': False, 'fcnet_hiddens': [256, 256], 'fcnet_activation': 'tanh', 'conv_filters': None, 'conv_activation': 'relu', 'post_fcnet_hiddens': [], 'post_fcnet_activation': 'relu', 'free_log_std': False, 'no_final_linear': False, 'vf_share_layers': True, 'use_lstm': False, 'max_seq_len': 20, 'lstm_cell_size': 256, 'lstm_use_prev_action': False, 'lstm_use_prev_reward': False, '_time_major': False, 'use_attention': False, 'attention_num_transformer_units': 1, 'attention_dim': 64, 'attention_num_heads': 1, 'attention_head_dim': 32, 'attention_memory_inference': 50, 'attention_memory_training': 50, 'attention_position_wise_mlp_dim': 32, 'attention_init_gru_gate_bias': 2.0, 'attention_use_n_prev_actions': 0, 'attention_use_n_prev_rewards': 0, 'num_framestacks': 0, 'dim': 84, 'grayscale': False, 'zero_mean': True, 'custom_model': 'my_torch_model', 'custom_model_config': {}, 'custom_action_dist': None, 'custom_preprocessor': None, 'lstm_use_prev_action_reward': -1, 'framestack': True}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>episode_reward_max: 0.0
+episode_reward_min: 0.0
+episode_reward_mean: 0.0
+episode_len_mean: 10.0
+episode_media: {}
+episodes_this_iter: 80
+policy_reward_min: {'learned2': -6.0, 'beat_last': -6.0}
+policy_reward_max: {'learned2': 6.0, 'beat_last': 6.0}
+policy_reward_mean: {'learned2': 0.0625, 'beat_last': -0.0625}
+custom_metrics: {}
+hist_stats: {'episode_reward': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'episode_lengths': [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10], 'policy_learned2_reward': [-1.0, -3.0, 0.0, 0.0, -3.0, 3.0, -5.0, 2.0, 3.0, 2.0, 0.0, 0.0, -4.0, -5.0, 4.0, -4.0, -1.0, 2.0, 3.0, 3.0, 0.0, -3.0, 1.0, -3.0, 2.0, 5.0, 3.0, 2.0, 1.0, 0.0, 3.0, -1.0, 0.0, 1.0, 5.0, -1.0, 0.0, -1.0, 0.0, 0.0, 4.0, 0.0, -2.0, 2.0, -1.0, -1.0, -2.0, 2.0, 0.0, -5.0, -3.0, 3.0, 2.0, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, -2.0, 1.0, 2.0, 0.0, 3.0, 2.0, -1.0, -6.0, 2.0, 6.0, 0.0, -2.0, 0.0, -3.0, -2.0, 0.0, -1.0, 2.0, -2.0, -5.0, 2.0], 'policy_beat_last_reward': [1.0, 3.0, 0.0, 0.0, 3.0, -3.0, 5.0, -2.0, -3.0, -2.0, 0.0, 0.0, 4.0, 5.0, -4.0, 4.0, 1.0, -2.0, -3.0, -3.0, 0.0, 3.0, -1.0, 3.0, -2.0, -5.0, -3.0, -2.0, -1.0, 0.0, -3.0, 1.0, 0.0, -1.0, -5.0, 1.0, 0.0, 1.0, 0.0, 0.0, -4.0, 0.0, 2.0, -2.0, 1.0, 1.0, 2.0, -2.0, 0.0, 5.0, 3.0, -3.0, -2.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 2.0, -1.0, -2.0, 0.0, -3.0, -2.0, 1.0, 6.0, -2.0, -6.0, 0.0, 2.0, 0.0, 3.0, 2.0, 0.0, 1.0, -2.0, 2.0, 5.0, -2.0]}
+sampler_perf: {'mean_raw_obs_processing_ms': 0.29636734160617806, 'mean_inference_ms': 1.2038987667406376, 'mean_action_processing_ms': 0.10593850814287933, 'mean_env_wait_ms': 0.04650111222148534, 'mean_env_render_ms': 0.0}
+off_policy_estimator: {}
+num_healthy_workers: 0
+timesteps_total: 800
+agent_timesteps_total: 1600
+timers: {'sample_time_ms': 335.555, 'sample_throughput': 2384.111, 'learn_time_ms': 37.361, 'learn_throughput': 21412.483}
+info: {'learner': {'learned2': {'learner_stats': {'allreduce_latency': 0.0, 'policy_loss': -0.09941699355840683}, 'model': {'policy_loss': -0.09941699355840683, 'imitation_loss': 1.098800539970398}, 'custom_metrics': {}}}, 'num_steps_sampled': 800, 'num_agent_steps_sampled': 1600, 'num_steps_trained': 800, 'num_agent_steps_trained': 1600}
+done: False
+episodes_total: 80
+training_iteration: 1
+experiment_id: ff7101d03aa04f819ae881e80c7c7916
+date: 2021-07-04_11-54-05
+timestamp: 1625367245
+time_this_iter_s: 0.3737308979034424
+time_total_s: 0.3737308979034424
+pid: 70134
+hostname: omen
+node_ip: 192.168.0.10
+config: {'num_workers': 0, 'num_envs_per_worker': 4, 'create_env_on_driver': False, 'rollout_fragment_length': 200, 'batch_mode': 'truncate_episodes', 'gamma': 0.9, 'lr': 0.0004, 'train_batch_size': 200, 'model': {'_use_default_native_models': False, 'fcnet_hiddens': [256, 256], 'fcnet_activation': 'tanh', 'conv_filters': None, 'conv_activation': 'relu', 'post_fcnet_hiddens': [], 'post_fcnet_activation': 'relu', 'free_log_std': False, 'no_final_linear': False, 'vf_share_layers': True, 'use_lstm': False, 'max_seq_len': 20, 'lstm_cell_size': 256, 'lstm_use_prev_action': False, 'lstm_use_prev_reward': False, '_time_major': False, 'use_attention': False, 'attention_num_transformer_units': 1, 'attention_dim': 64, 'attention_num_heads': 1, 'attention_head_dim': 32, 'attention_memory_inference': 50, 'attention_memory_training': 50, 'attention_position_wise_mlp_dim': 32, 'attention_init_gru_gate_bias': 2.0, 'attention_use_n_prev_actions': 0, 'attention_use_n_prev_rewards': 0, 'num_framestacks': 'auto', 'dim': 84, 'grayscale': False, 'zero_mean': True, 'custom_model': None, 'custom_model_config': {}, 'custom_action_dist': None, 'custom_preprocessor': None, 'lstm_use_prev_action_reward': -1, 'framestack': True}, 'optimizer': {}, 'horizon': None, 'soft_horizon': False, 'no_done_at_end': False, 'env': 'RockPaperScissors', 'observation_space': None, 'action_space': None, 'env_config': {}, 'env_task_fn': None, 'render_env': False, 'record_env': False, 'clip_rewards': None, 'normalize_actions': True, 'clip_actions': False, 'preprocessor_pref': 'deepmind', 'log_level': 'WARN', 'callbacks': &lt;class 'ray.rllib.agents.callbacks.DefaultCallbacks'&gt;, 'ignore_worker_failures': False, 'log_sys_usage': True, 'fake_sampler': False, 'framework': 'torch', 'eager_tracing': False, 'explore': True, 'exploration_config': {'type': 'StochasticSampling'}, 'evaluation_interval': None, 'evaluation_num_episodes': 10, 'evaluation_parallel_to_training': False, 'in_evaluation': False, 'evaluation_config': {}, 'evaluation_num_workers': 0, 'custom_eval_function': None, 'sample_async': False, 'sample_collector': &lt;class 'ray.rllib.evaluation.collectors.simple_list_collector.SimpleListCollector'&gt;, 'observation_filter': 'NoFilter', 'synchronize_filters': True, 'tf_session_args': {'intra_op_parallelism_threads': 2, 'inter_op_parallelism_threads': 2, 'gpu_options': {'allow_growth': True}, 'log_device_placement': False, 'device_count': {'CPU': 1}, 'allow_soft_placement': True}, 'local_tf_session_args': {'intra_op_parallelism_threads': 8, 'inter_op_parallelism_threads': 8}, 'compress_observations': False, 'collect_metrics_timeout': 180, 'metrics_smoothing_episodes': 100, 'remote_worker_envs': False, 'remote_env_batch_wait_ms': 0, 'min_iter_time_s': 0, 'timesteps_per_iteration': 0, 'seed': None, 'extra_python_environs_for_driver': {}, 'extra_python_environs_for_worker': {}, 'num_gpus': 0, '_fake_gpus': False, 'num_cpus_per_worker': 1, 'num_gpus_per_worker': 0, 'custom_resources_per_worker': {}, 'num_cpus_for_driver': 1, 'placement_strategy': 'PACK', 'input': 'sampler', 'actions_in_input_normalized': False, 'input_evaluation': ['is', 'wis'], 'postprocess_inputs': False, 'shuffle_buffer_size': 0, 'output': None, 'output_compress_columns': ['obs', 'new_obs'], 'output_max_file_size': 67108864, 'multiagent': {'policies': {'random_move': (&lt;class '__main__.RandomMove'&gt;, Discrete(3), Discrete(3), {}), 'beat_last': (&lt;class 'ray.rllib.examples.policy.rock_paper_scissors_dummies.BeatLastHeuristic'&gt;, Discrete(3), Discrete(3), {}), 'always_same': (&lt;class 'ray.rllib.examples.policy.rock_paper_scissors_dummies.AlwaysSameHeuristic'&gt;, Discrete(3), Discrete(3), {}), 'learned0': (None, Discrete(3), Discrete(3), {'framework': 'torch', 'model': {}}), 'learned1': (&lt;class 'ray.rllib.policy.policy_template.MyTorchPolicy'&gt;, Discrete(3), Discrete(3), {'framework': 'torch', 'model': {}}), 'learned2': (None, Discrete(3), Discrete(3), {'framework': 'torch', 'model': {'custom_model': 'my_torch_model', 'custom_model_config': {}}})}, 'policy_mapping_fn': &lt;function &lt;lambda&gt; at 0x7fb213954310&gt;, 'policies_to_train': ['learned0', 'learned1', 'learned2'], 'observation_fn': None, 'replay_mode': 'independent', 'count_steps_by': 'env_steps'}, 'logger_config': None, 'simple_optimizer': True, 'monitor': -1}
+time_since_restore: 0.3737308979034424
+timesteps_since_restore: 0
+iterations_since_restore: 1
+perf: {'cpu_util_percent': 31.4, 'ram_util_percent': 9.2, 'gpu_util_percent0': 0.27, 'vram_util_percent0': 0.08259507829977629}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">201</span><span class="p">):</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span>
+              <span class="n">results</span><span class="p">[</span><span class="s1">'episode_reward_mean'</span><span class="p">],</span>
+              <span class="n">results</span><span class="p">[</span><span class="s1">'policy_reward_mean'</span><span class="p">],</span>
+              <span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">,</span> <span class="n">results</span><span class="p">[</span><span class="s1">'timesteps_total'</span><span class="p">],</span>
+              <span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">,</span> <span class="n">results</span><span class="p">[</span><span class="s1">'episodes_total'</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>10 0.0 {'learned2': -0.03, 'beat_last': 0.03} 	 8800 	 880
+20 0.0 {'learned2': -0.02, 'beat_last': 0.02} 	 16800 	 1680
+30 0.0 {'learned2': 0.1, 'beat_last': -0.1} 	 24800 	 2480
+40 0.0 {'learned2': 0.0, 'beat_last': 0.0} 	 32800 	 3280
+50 0.0 {'learned2': 0.08, 'beat_last': -0.08} 	 40800 	 4080
+60 0.0 {'learned2': -0.06, 'beat_last': 0.06} 	 48800 	 4880
+70 0.0 {'learned2': 0.02, 'beat_last': -0.02} 	 56800 	 5680
+80 0.0 {'learned2': 0.39, 'beat_last': -0.39} 	 64800 	 6480
+90 0.0 {'learned2': 0.8, 'beat_last': -0.8} 	 72800 	 7280
+100 0.0 {'learned2': 1.31, 'beat_last': -1.31} 	 80800 	 8080
+110 0.0 {'learned2': 1.74, 'beat_last': -1.74} 	 88800 	 8880
+120 0.0 {'learned2': 2.74, 'beat_last': -2.74} 	 96800 	 9680
+130 0.0 {'learned2': 4.71, 'beat_last': -4.71} 	 104800 	 10480
+140 0.0 {'learned2': 5.12, 'beat_last': -5.12} 	 112800 	 11280
+150 0.0 {'learned2': 5.38, 'beat_last': -5.38} 	 120800 	 12080
+160 0.0 {'learned2': 5.67, 'beat_last': -5.67} 	 128800 	 12880
+170 0.0 {'learned2': 5.5, 'beat_last': -5.5} 	 136800 	 13680
+180 0.0 {'learned2': 5.82, 'beat_last': -5.82} 	 144800 	 14480
+190 0.0 {'learned2': 5.89, 'beat_last': -5.89} 	 152800 	 15280
+200 0.0 {'learned2': 5.78, 'beat_last': -5.78} 	 160800 	 16080
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>학습이 진행되면서 learned 정책이 BeatLastHeuristic 정책을 쉽게 이기는 것을 알 수 있다.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="맺으며">
+<a class="anchor" href="#%EB%A7%BA%EC%9C%BC%EB%A9%B0" aria-hidden="true"><span class="octicon octicon-link"></span></a>맺으며<a class="anchor-link" href="#%EB%A7%BA%EC%9C%BC%EB%A9%B0"> </a>
+</h2>
+<p>ray의 rllib은 다양한 강화학습 방식을 지원할뿐만 아니라 병렬 학습에 대한 처리가 매우 우수하다. 게다가 활발하게 코드가 관리되고 있다. 다만, 사용자 환경이나 모델을 잘 정의하여 활용하기 위해선 이론적 배경과 rllib의 내부 호출 구조를 잘 알아야 한다.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/jupyter-blog/rl/2021/02/15/rock-paper-scissors.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/jupyter-blog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/jupyter-blog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>An easy to use blogging platform with support for Jupyter Notebooks.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/fastai" title="fastai"><svg class="svg-icon grey"><use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/fastdotai" title="fastdotai"><svg class="svg-icon grey"><use xlink:href="/jupyter-blog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
